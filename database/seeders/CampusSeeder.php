@@ -3,23 +3,38 @@
 namespace Database\Seeders;
 
 use App\Models\Campus;
+use App\Models\University;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class CampusSeeder extends Seeder
 {
+    /**
+     * Data ada di database/seeders/data/campuses.php.
+     * Menambah kampus baru = tambah entri di file itu lalu jalankan:
+     *   php artisan db:seed --class=CampusSeeder
+     */
     public function run(): void
     {
-        $campuses = [
-            ['slug' => 'ui',    'name' => 'Universitas Indonesia',            'city' => 'Depok',       'zone_label' => 'Zona UI (Depok)'],
-            ['slug' => 'itb',   'name' => 'Institut Teknologi Bandung',       'city' => 'Bandung',     'zone_label' => 'Zona ITB (Bandung)'],
-            ['slug' => 'ugm',   'name' => 'Universitas Gadjah Mada',          'city' => 'Yogyakarta',  'zone_label' => 'Zona UGM (Yogyakarta)'],
-            ['slug' => 'undip', 'name' => 'Universitas Diponegoro',           'city' => 'Semarang',    'zone_label' => 'Zona UNDIP (Semarang)'],
-            ['slug' => 'its',   'name' => 'Institut Teknologi Sepuluh Nopember', 'city' => 'Surabaya',  'zone_label' => 'Zona ITS (Surabaya)'],
-            ['slug' => 'unpad', 'name' => 'Universitas Padjadjaran',          'city' => 'Jatinangor',  'zone_label' => 'Zona UNPAD (Jatinangor)'],
-        ];
+        $universities = require database_path('seeders/data/campuses.php');
 
-        foreach ($campuses as $campus) {
-            Campus::updateOrCreate(['slug' => $campus['slug']], $campus);
+        foreach ($universities as $row) {
+            $university = University::updateOrCreate(
+                ['slug' => $row['slug']],
+                ['name' => $row['name'], 'short_name' => $row['short_name']],
+            );
+
+            foreach ($row['campuses'] as $campus) {
+                Campus::updateOrCreate(
+                    ['slug' => Str::slug($row['slug'].' '.$campus['name'])],
+                    [
+                        'university_id' => $university->id,
+                        'name' => $campus['name'],
+                        'city' => $campus['city'],
+                        'province' => $campus['province'],
+                    ],
+                );
+            }
         }
     }
 }

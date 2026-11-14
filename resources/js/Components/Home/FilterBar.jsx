@@ -12,6 +12,7 @@ const SORTS = [
     { value: 'terdekat_cod', label: 'Terdekat COD' },
 ];
 
+/** Opsi bisa berupa { value, label } atau grup { label, options: [...] } (dirender sebagai optgroup). */
 function SelectBox({ label, value, onChange, options }) {
     return (
         <div className="relative">
@@ -19,13 +20,23 @@ function SelectBox({ label, value, onChange, options }) {
                 value={value}
                 onChange={(event) => onChange(event.target.value)}
                 aria-label={label}
-                className="h-10 appearance-none rounded-xl border border-outline-variant/60 bg-surface-container-lowest pl-3.5 pr-9 text-label-lg font-label-lg text-on-surface shadow-sm transition-colors hover:border-primary-container focus:border-primary-container focus:outline-none focus:ring-2 focus:ring-primary-container/20"
+                className="h-10 max-w-[15rem] appearance-none rounded-xl border border-outline-variant/60 bg-surface-container-lowest pl-3.5 pr-9 text-label-lg font-label-lg text-on-surface shadow-sm transition-colors hover:border-primary-container focus:border-primary-container focus:outline-none focus:ring-2 focus:ring-primary-container/20"
             >
-                {options.map((option) => (
-                    <option key={option.value} value={option.value}>
-                        {option.label}
-                    </option>
-                ))}
+                {options.map((option) =>
+                    option.options ? (
+                        <optgroup key={option.label} label={option.label}>
+                            {option.options.map((item) => (
+                                <option key={item.value} value={item.value}>
+                                    {item.label}
+                                </option>
+                            ))}
+                        </optgroup>
+                    ) : (
+                        <option key={option.value} value={option.value}>
+                            {option.label}
+                        </option>
+                    ),
+                )}
             </select>
             <Icon
                 name="chevron-down"
@@ -33,6 +44,26 @@ function SelectBox({ label, value, onChange, options }) {
             />
         </div>
     );
+}
+
+/** "Indralaya (Ogan Ilir)"; kalau nama = kota cukup "Depok". */
+function areaLabel(campus) {
+    return campus.city === campus.name ? campus.name : `${campus.name} (${campus.city})`;
+}
+
+/** Kelompokkan kampus per universitas, urutan mengikuti data dari server. */
+function groupCampuses(campuses) {
+    const groups = new Map();
+
+    campuses.forEach((campus) => {
+        const key = campus.university.slug;
+        if (!groups.has(key)) {
+            groups.set(key, { label: campus.university.name, options: [] });
+        }
+        groups.get(key).options.push({ value: campus.slug, label: areaLabel(campus) });
+    });
+
+    return [...groups.values()];
 }
 
 /**
@@ -44,10 +75,7 @@ export default function FilterBar({ filters, categories = [], campuses = [], onC
         { value: '', label: 'Semua kategori' },
         ...categories.map((category) => ({ value: category.slug, label: category.name })),
     ];
-    const areaOptions = [
-        { value: '', label: 'Semua area' },
-        ...campuses.map((campus) => ({ value: campus.slug, label: campus.zone_label })),
-    ];
+    const areaOptions = [{ value: '', label: 'Semua area' }, ...groupCampuses(campuses)];
 
     return (
         <section

@@ -1,5 +1,6 @@
 import Navbar from '@/Components/Layout/Navbar';
 import Footer from '@/Components/Layout/Footer';
+import Toast from '@/Components/UI/Toast';
 
 /**
  * Layout halaman publik KosThrift (navbar atas + footer).
@@ -11,6 +12,7 @@ export default function MarketLayout({ children }) {
             <Navbar />
             <main>{children}</main>
             <Footer />
+            <Toast />
         </div>
     );
 }

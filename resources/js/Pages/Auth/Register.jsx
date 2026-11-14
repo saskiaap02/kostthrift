@@ -1,120 +1,118 @@
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
-import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
+import GuestLayout from '@/Layouts/GuestLayout';
+import Icon from '@/Components/UI/Icon';
+import FormField, { inputClass } from '@/Components/UI/FormField';
+import PasswordInput from '@/Components/UI/PasswordInput';
+import CampusSelect from '@/Components/UI/CampusSelect';
 
-export default function Register() {
+/** Props dari RegisteredUserController@create: campuses [{ id, name, city, university: { slug, name } }] */
+export default function Register({ campuses }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
+        campus_id: '',
         password: '',
         password_confirmation: '',
     });
 
-    const submit = (e) => {
-        e.preventDefault();
-
-        post(route('register'), {
-            onFinish: () => reset('password', 'password_confirmation'),
-        });
+    const submit = (event) => {
+        event.preventDefault();
+        post('/register', { onFinish: () => reset('password', 'password_confirmation') });
     };
 
     return (
-        <GuestLayout>
-            <Head title="Register" />
+        <GuestLayout title="Buat akun KosThrift" subtitle="Gratis. Mulai jual beli perlengkapan kos dalam semenit.">
+            <Head title="Daftar" />
 
-            <form onSubmit={submit}>
-                <div>
-                    <InputLabel htmlFor="name" value="Name" />
-
-                    <TextInput
+            <form onSubmit={submit} className="space-y-4">
+                <FormField label="Nama lengkap" htmlFor="name" required error={errors.name}>
+                    <input
                         id="name"
-                        name="name"
+                        type="text"
                         value={data.name}
-                        className="mt-1 block w-full"
+                        onChange={(event) => setData('name', event.target.value)}
                         autoComplete="name"
-                        isFocused={true}
-                        onChange={(e) => setData('name', e.target.value)}
-                        required
+                        autoFocus
+                        placeholder="Nama sesuai KTM"
+                        className={inputClass}
                     />
+                </FormField>
 
-                    <InputError message={errors.name} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel htmlFor="email" value="Email" />
-
-                    <TextInput
+                <FormField label="Email" htmlFor="email" required error={errors.email}>
+                    <input
                         id="email"
                         type="email"
-                        name="email"
                         value={data.email}
-                        className="mt-1 block w-full"
+                        onChange={(event) => setData('email', event.target.value)}
                         autoComplete="username"
-                        onChange={(e) => setData('email', e.target.value)}
-                        required
+                        placeholder="nama@email.com"
+                        className={inputClass}
                     />
+                </FormField>
 
-                    <InputError message={errors.email} className="mt-2" />
+                <div className="rounded-2xl bg-surface-container-low/70 p-4">
+                    <p className="mb-3 flex items-center gap-2 text-label-lg font-label-lg font-bold text-on-surface">
+                        <Icon name="geo-alt" className="text-[15px] text-primary-container" />
+                        Kampus kamu <span className="font-normal text-on-surface-variant">(opsional)</span>
+                    </p>
+                    <CampusSelect
+                        campuses={campuses}
+                        value={data.campus_id}
+                        onChange={(id) => setData('campus_id', id)}
+                        error={errors.campus_id}
+                    />
+                    <p className="mt-3 text-body-sm font-body-sm text-on-surface-variant">
+                        Dipakai sebagai pilihan awal lokasi saat kamu memasang iklan.
+                    </p>
                 </div>
 
-                <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
-
-                    <TextInput
+                <FormField
+                    label="Password"
+                    htmlFor="password"
+                    required
+                    error={errors.password}
+                    hint="Minimal 8 karakter."
+                >
+                    <PasswordInput
                         id="password"
-                        type="password"
-                        name="password"
                         value={data.password}
-                        className="mt-1 block w-full"
+                        onChange={(value) => setData('password', value)}
                         autoComplete="new-password"
-                        onChange={(e) => setData('password', e.target.value)}
-                        required
+                        invalid={Boolean(errors.password)}
                     />
+                </FormField>
 
-                    <InputError message={errors.password} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel
-                        htmlFor="password_confirmation"
-                        value="Confirm Password"
-                    />
-
-                    <TextInput
+                <FormField
+                    label="Ulangi password"
+                    htmlFor="password_confirmation"
+                    required
+                    error={errors.password_confirmation}
+                >
+                    <PasswordInput
                         id="password_confirmation"
-                        type="password"
-                        name="password_confirmation"
                         value={data.password_confirmation}
-                        className="mt-1 block w-full"
+                        onChange={(value) => setData('password_confirmation', value)}
                         autoComplete="new-password"
-                        onChange={(e) =>
-                            setData('password_confirmation', e.target.value)
-                        }
-                        required
+                        invalid={Boolean(errors.password_confirmation)}
                     />
+                </FormField>
 
-                    <InputError
-                        message={errors.password_confirmation}
-                        className="mt-2"
-                    />
-                </div>
-
-                <div className="mt-4 flex items-center justify-end">
-                    <Link
-                        href={route('login')}
-                        className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    >
-                        Already registered?
-                    </Link>
-
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Register
-                    </PrimaryButton>
-                </div>
+                <button
+                    type="submit"
+                    disabled={processing}
+                    className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary-container text-label-lg font-label-lg font-bold text-white transition-colors hover:bg-tertiary active:scale-[0.99] disabled:opacity-60"
+                >
+                    {processing && <Icon name="arrow-repeat" className="animate-spin text-[14px]" />}
+                    {processing ? 'Mendaftarkan...' : 'Daftar'}
+                </button>
             </form>
+
+            <p className="mt-6 text-center text-body-md font-body-md text-on-surface-variant">
+                Sudah punya akun?{' '}
+                <Link href="/login" className="font-bold text-primary-container hover:underline">
+                    Masuk
+                </Link>
+            </p>
         </GuestLayout>
     );
 }

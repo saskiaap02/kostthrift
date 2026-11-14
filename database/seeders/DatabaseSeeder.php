@@ -21,7 +21,7 @@ class DatabaseSeeder extends Seeder
             User::factory()->create([
                 'name' => 'Test User',
                 'email' => 'test@example.com',
-                'campus_id' => Campus::where('slug', 'ui')->value('id'),
+                'campus_id' => Campus::where('slug', 'ui-depok')->value('id'),
                 'ktm_verified_at' => now(),
             ]);
         }

@@ -6,13 +6,12 @@ import SearchBar from '@/Components/Layout/SearchBar';
 import useClickOutside from '@/Hooks/useClickOutside';
 import { initials } from '@/Lib/format';
 
-function IconButton({ icon, label, count = 0, dot = false }) {
-    return (
-        <button
-            type="button"
-            aria-label={label}
-            className="relative flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container active:scale-90"
-        >
+function IconButton({ icon, label, count = 0, dot = false, href = null }) {
+    const className =
+        'relative flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container active:scale-90';
+
+    const content = (
+        <>
             <Icon name={icon} className="text-[20px]" />
             {count > 0 && (
                 <span className="absolute right-0 top-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-orange-500 px-1 text-[10px] font-bold text-white">
@@ -22,6 +21,17 @@ function IconButton({ icon, label, count = 0, dot = false }) {
             {dot && (
                 <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full border-2 border-surface-container-lowest bg-orange-500" />
             )}
+        </>
+    );
+
+    // Tamu: arahkan ke halaman login. User login: halaman tujuan dibuat di langkah berikutnya.
+    return href ? (
+        <Link href={href} aria-label={label} className={className}>
+            {content}
+        </Link>
+    ) : (
+        <button type="button" aria-label={label} className={className}>
+            {content}
         </button>
     );
 }
@@ -90,21 +100,27 @@ export default function Navbar() {
                 <SearchBar className="order-last w-full basis-full md:order-none md:mx-auto md:max-w-xl md:flex-1 md:basis-auto" />
 
                 <div className="ml-auto flex items-center gap-1 md:ml-0">
-                    {user && (
-                        <>
-                            <IconButton icon="heart" label="Wishlist" count={counts.wishlist} />
-                            <IconButton icon="bag" label="Keranjang" count={counts.cart} />
-                            <IconButton icon="chat-dots" label="Pesan" dot={(counts.unread_chats ?? 0) > 0} />
-                        </>
-                    )}
+                    <IconButton
+                        icon="heart"
+                        label="Wishlist"
+                        count={counts.wishlist}
+                        href={user ? null : '/login'}
+                    />
+                    <IconButton icon="bag" label="Keranjang" count={counts.cart} href={user ? null : '/login'} />
+                    <IconButton
+                        icon="chat-dots"
+                        label="Pesan"
+                        dot={(counts.unread_chats ?? 0) > 0}
+                        href={user ? null : '/login'}
+                    />
 
-                    <a
-                        href="#"
+                    <Link
+                        href="/jual"
                         className="mx-1 flex h-10 items-center gap-1.5 rounded-full bg-secondary-container px-4 text-label-lg font-label-lg font-bold text-primary shadow-sm transition-all hover:bg-secondary-fixed active:scale-95"
                     >
                         <Icon name="plus-lg" className="text-[14px]" />
                         <span>Jual</span>
-                    </a>
+                    </Link>
 
                     {user ? (
                         <UserMenu user={user} />

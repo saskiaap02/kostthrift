@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ProductImage extends Model
@@ -25,13 +24,14 @@ class ProductImage extends Model
     }
 
     /**
-     * URL siap pakai: URL penuh dipakai apa adanya,
-     * selain itu dianggap path di disk "public".
+     * URL siap pakai: URL penuh dipakai apa adanya; selain itu dianggap file di disk "public"
+     * dan dilayani lewat /storage (butuh `php artisan storage:link`).
+     * Sengaja relatif agar tetap benar walau APP_URL tidak sama dengan alamat yang dibuka.
      */
     protected function url(): Attribute
     {
         return Attribute::get(fn () => Str::startsWith($this->path, ['http://', 'https://'])
             ? $this->path
-            : Storage::disk('public')->url($this->path));
+            : '/storage/'.ltrim($this->path, '/'));
     }
 }

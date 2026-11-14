@@ -1,38 +1,36 @@
-import { useMemo } from 'react';
 import { Head, usePage } from '@inertiajs/react';
 import MarketLayout from '@/Layouts/MarketLayout';
 import Hero from '@/Components/Home/Hero';
 import FilterBar from '@/Components/Home/FilterBar';
 import TrustSection from '@/Components/Home/TrustSection';
 import ProductGrid from '@/Components/Product/ProductGrid';
+import Icon from '@/Components/UI/Icon';
 import useProductFilters from '@/Hooks/useProductFilters';
-import { campuses, categories, heroImage, products, totalProducts } from '@/Data/mockHome';
+import useProductFeed from '@/Hooks/useProductFeed';
+import useProductActions from '@/Hooks/useProductActions';
+import { heroImage } from '@/Data/assets';
 
 /**
- * Satu halaman, dua tampilan:
- * - Tamu (belum login): landing = Hero + katalog + "Kenapa KosThrift".
- * - User login: langsung sapaan singkat + katalog, tanpa banner.
+ * Props dari HomeController:
+ *   products   { data: [ProductResource], meta }  halaman pertama katalog
+ *   filters    { q, kondisi, kategori, kampus, urut }
+ *   categories [{ slug, name, icon }]
+ *   campuses   [{ slug, name, city, label, university: { slug, name, short_name } }]
  *
- * LANGKAH 3 - data masih mock (resources/js/Data/mockHome.js).
- * LANGKAH 4 - data berasal dari props Inertia (HomeController), filter di server.
+ * Tamu melihat landing (Hero + "Kenapa KosThrift"); user login langsung ke katalog.
  */
-export default function Home() {
+export default function Home({ products, filters: serverFilters, categories, campuses }) {
     const user = usePage().props.auth?.user;
-    const { filters, update, reset, hasActiveFilters } = useProductFilters();
 
-    // Sementara: filter + urut di sisi klien, hanya agar UI terasa hidup.
-    const visibleProducts = useMemo(() => {
-        const list = products.filter(
-            (product) =>
-                (!filters.kondisi || product.condition === filters.kondisi) &&
-                (!filters.kategori || product.category.slug === filters.kategori) &&
-                (!filters.kampus || product.campus.slug === filters.kampus),
-        );
+    const { filters, update, reset, hasActiveFilters } = useProductFilters(serverFilters);
+    const feed = useProductFeed(products, serverFilters);
 
-        return [...list].sort((a, b) =>
-            filters.urut === 'termurah' ? a.price - b.price : b.id - a.id,
-        );
-    }, [filters]);
+    // Hati langsung berubah di layar (optimistik); server menyimpan di belakang layar.
+    const { toggleWishlist, addToCart } = useProductActions({
+        onWishlistChange: (product, next) => feed.patchItem(product.id, { is_wishlisted: next }),
+    });
+
+    const remaining = feed.total - feed.items.length;
 
     return (
         <MarketLayout>
@@ -74,20 +72,25 @@ export default function Home() {
                         </p>
                     </div>
                     <span className="rounded-md bg-primary-fixed/40 px-2.5 py-1 text-label-md font-label-md font-bold text-primary-container">
-                        {totalProducts}+ Barang
+                        {feed.total} Barang
                     </span>
                 </div>
 
-                <ProductGrid products={visibleProducts} />
+                <ProductGrid products={feed.items} onToggleWishlist={toggleWishlist} onAddToCart={addToCart} />
 
-                <div className="mt-6 text-center">
-                    <button
-                        type="button"
-                        className="w-full rounded-xl border border-outline-variant/50 bg-surface-container-low px-6 py-3 text-label-lg font-label-lg font-bold text-primary-container transition-colors hover:bg-surface-container active:scale-[0.98] md:w-auto"
-                    >
-                        Lihat 120+ Perlengkapan Kos Lainnya
-                    </button>
-                </div>
+                {feed.hasMore && (
+                    <div className="mt-6 text-center">
+                        <button
+                            type="button"
+                            onClick={feed.loadMore}
+                            disabled={feed.loading}
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-outline-variant/50 bg-surface-container-low px-6 py-3 text-label-lg font-label-lg font-bold text-primary-container transition-colors hover:bg-surface-container active:scale-[0.98] disabled:opacity-60 md:w-auto"
+                        >
+                            {feed.loading && <Icon name="arrow-repeat" className="animate-spin text-[14px]" />}
+                            {feed.loading ? 'Memuat...' : `Lihat ${remaining} Barang Lainnya`}
+                        </button>
+                    </div>
+                )}
             </section>
 
             {!user && <TrustSection />}

@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -66,6 +67,18 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
+    /** User yang memasukkan barang ini ke wishlist. */
+    public function wishlistedBy(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'wishlists')->withTimestamps();
+    }
+
+    /** User yang memasukkan barang ini ke troli. */
+    public function cartedBy(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'cart_items')->withTimestamps();
+    }
+
     public function images(): HasMany
     {
         return $this->hasMany(ProductImage::class)->orderBy('sort_order');
@@ -77,6 +90,20 @@ class Product extends Model
     }
 
     // ---------- Accessor ----------
+
+    /**
+     * Lokasi barang untuk ditampilkan, mis. "Timbangan, Unsri Indralaya".
+     * `location_note` = detail area yang diisi penjual saat upload (boleh kosong),
+     * kampusnya diambil dari `campus` yang dipilih penjual.
+     */
+    protected function locationLabel(): Attribute
+    {
+        return Attribute::get(function (): string {
+            $campus = $this->campus->label;
+
+            return $this->location_note ? "{$this->location_note}, {$campus}" : $campus;
+        });
+    }
 
     /** Persentase hemat, null kalau tidak ada harga coret. */
     protected function discountPercent(): Attribute

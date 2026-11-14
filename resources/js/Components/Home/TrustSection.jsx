@@ -14,7 +14,7 @@ const ITEMS = [
         text: 'Dana pembeli disimpan aman di rekening bersama KosThrift hingga barang diterima dan dicek langsung.',
     },
     {
-        icon: 'handshake',
+        icon: 'box-seam',
         iconClass: 'bg-amber-100 text-amber-800',
         title: 'COD Kampus Bebas Ongkir',
         text: 'Ketemu langsung di gerbang kampus, halte bikun, atau kantin favorit tanpa biaya kirim & anti ribet.',

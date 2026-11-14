@@ -1,28 +1,58 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { router } from '@inertiajs/react';
+import { cleanFilters } from '@/Lib/query';
 
 const DEFAULTS = {
+    q: '',
     kondisi: '', // '' | 'second' | 'baru'
-    kategori: '', // slug kategori, '' = semua
-    kampus: '', // slug kampus (area), '' = semua
+    kategori: '', // slug kategori
+    kampus: '', // slug kampus (area)
     urut: 'terbaru', // terbaru | termurah | terdekat_cod
 };
 
 /**
- * State filter beranda.
- * Langkah 3: hanya state lokal.
- * Langkah 4: `update` dan `reset` diganti router.get('/', filters, { preserveState: true, only: [...] }).
+ * Filter beranda yang disinkronkan dengan server.
+ * `serverFilters` = prop `filters` dari HomeController (sumber kebenaran).
+ * Setiap perubahan memicu router.get('/') sehingga filter dikerjakan di database.
  */
-export default function useProductFilters(initial = {}) {
-    const [filters, setFilters] = useState({ ...DEFAULTS, ...initial });
+export default function useProductFilters(serverFilters) {
+    const [filters, setFilters] = useState({ ...DEFAULTS, ...serverFilters });
+
+    // Server mengirim filter baru (mis. setelah pencarian dari navbar) -> ikuti.
+    useEffect(() => {
+        setFilters({ ...DEFAULTS, ...serverFilters });
+    }, [serverFilters]);
+
+    const visit = useCallback((next) => {
+        router.get('/', cleanFilters(next), {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+            only: ['products', 'filters'],
+        });
+    }, []);
 
     const update = useCallback(
-        (patch) => setFilters((previous) => ({ ...previous, ...patch })),
-        [],
+        (patch) => {
+            const next = { ...filters, ...patch };
+            setFilters(next);
+            visit(next);
+        },
+        [filters, visit],
     );
 
-    const reset = useCallback(() => setFilters({ ...DEFAULTS }), []);
+    // Atur ulang semua filter, kata kunci pencarian tetap dipertahankan.
+    const reset = useCallback(() => {
+        const next = { ...DEFAULTS, q: filters.q };
+        setFilters(next);
+        visit(next);
+    }, [filters.q, visit]);
 
-    const hasActiveFilters = Object.keys(DEFAULTS).some((key) => filters[key] !== DEFAULTS[key]);
+    const hasActiveFilters =
+        filters.kondisi !== '' ||
+        filters.kategori !== '' ||
+        filters.kampus !== '' ||
+        filters.urut !== DEFAULTS.urut;
 
     return { filters, update, reset, hasActiveFilters };
 }

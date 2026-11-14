@@ -1,3 +1,4 @@
+import { Link } from '@inertiajs/react';
 import Icon from '@/Components/UI/Icon';
 import Price from '@/Components/UI/Price';
 import ConditionBadge from '@/Components/UI/ConditionBadge';
@@ -5,36 +6,47 @@ import VerifiedBadge from '@/Components/UI/VerifiedBadge';
 import WishlistButton from '@/Components/Product/WishlistButton';
 
 /**
- * Bentuk `product` = kontrak ProductResource (dibuat di langkah 4):
+ * Bentuk `product` = ProductResource:
  * {
  *   id, slug, title, price, original_price, discount_percent,
  *   condition: 'baru' | 'second', condition_label,
- *   location_note, image_url, is_wishlisted,
+ *   location_label, image_url, is_wishlisted,
  *   seller: { name, ktm_verified }
  * }
  */
 export default function ProductCard({ product, onToggleWishlist, onAddToCart }) {
     const {
+        slug,
         title,
         price,
         original_price,
         condition,
         condition_label,
-        location_note,
+        location_label,
         image_url,
         is_wishlisted,
         seller,
     } = product;
 
+    const href = `/produk/${slug}`;
+
     return (
         <article className="group flex flex-col overflow-hidden rounded-2xl border border-outline-variant/50 bg-surface-container-lowest shadow-sm transition-shadow hover:shadow-[0_8px_24px_-4px_rgba(27,58,140,0.12)]">
             <div className="relative aspect-square w-full overflow-hidden bg-surface-container-low">
-                <img
-                    src={image_url}
-                    alt={title}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
+                <Link href={href} className="block h-full w-full" aria-label={`Lihat ${title}`}>
+                    {image_url ? (
+                        <img
+                            src={image_url}
+                            alt={title}
+                            loading="lazy"
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                    ) : (
+                        <div className="flex h-full w-full items-center justify-center text-outline">
+                            <Icon name="image" className="text-[32px]" />
+                        </div>
+                    )}
+                </Link>
                 <ConditionBadge
                     condition={condition}
                     label={condition_label}
@@ -47,11 +59,13 @@ export default function ProductCard({ product, onToggleWishlist, onAddToCart }) 
                 <div>
                     {seller?.ktm_verified && <VerifiedBadge className="mb-1" />}
                     <h3 className="line-clamp-2 font-headline-sm text-body-md font-semibold leading-tight text-on-surface">
-                        {title}
+                        <Link href={href} className="hover:text-primary-container">
+                            {title}
+                        </Link>
                     </h3>
                     <p className="mt-1 flex items-center gap-1 text-[11px] font-body-sm text-outline md:text-body-sm">
                         <Icon name="geo-alt-fill" className="text-[11px]" />
-                        <span>{location_note}</span>
+                        <span>{location_label}</span>
                     </p>
                 </div>
 
@@ -66,13 +80,12 @@ export default function ProductCard({ product, onToggleWishlist, onAddToCart }) 
                             <Icon name="bag-plus" className="text-[14px]" />
                             <span>Troli</span>
                         </button>
-                        {/* Langkah berikutnya: href ke halaman detail /produk/{slug} */}
-                        <a
-                            href="#"
+                        <Link
+                            href={href}
                             className="flex h-9 items-center justify-center rounded-lg border border-outline-variant/40 bg-surface-container-low text-label-sm font-label-sm font-semibold text-on-surface-variant transition-transform hover:text-primary active:scale-95"
                         >
                             Detail
-                        </a>
+                        </Link>
                     </div>
                 </div>
             </div>

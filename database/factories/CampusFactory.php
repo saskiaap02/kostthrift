@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Campus;
+use App\Models\University;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -15,13 +16,14 @@ class CampusFactory extends Factory
 
     public function definition(): array
     {
-        $name = 'Universitas '.fake()->unique()->lexify('????');
+        $name = ucfirst(fake()->unique()->lexify('????'));
 
         return [
+            'university_id' => University::factory(),
             'name' => $name,
-            'slug' => Str::slug($name),
+            'slug' => Str::slug($name).'-'.Str::lower(Str::random(5)),
             'city' => fake()->city(),
-            'zone_label' => 'Zona '.Str::upper(fake()->lexify('???')),
+            'province' => fake()->state(),
         ];
     }
 }

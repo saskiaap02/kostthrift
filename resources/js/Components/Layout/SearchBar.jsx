@@ -1,17 +1,21 @@
-import { useState } from 'react';
-import { router } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
+import { router, usePage } from '@inertiajs/react';
 import Icon from '@/Components/UI/Icon';
+import { cleanFilters } from '@/Lib/query';
 
-export default function SearchBar({ initialQuery = '', className = '' }) {
-    const [query, setQuery] = useState(initialQuery);
+export default function SearchBar({ className = '' }) {
+    // `filters` hanya ada di Beranda; di halaman lain undefined.
+    const { filters } = usePage().props;
+    const [query, setQuery] = useState(filters?.q ?? '');
+
+    useEffect(() => {
+        setQuery(filters?.q ?? '');
+    }, [filters?.q]);
 
     const submit = (event) => {
         event.preventDefault();
-        // Langkah 4: HomeController membaca parameter `q`.
-        router.get('/', query.trim() ? { q: query.trim() } : {}, {
-            preserveState: true,
-            preserveScroll: true,
-        });
+        // Pertahankan filter lain, ganti kata kunci.
+        router.get('/', cleanFilters({ ...filters, q: query.trim() }), { preserveScroll: true });
     };
 
     return (
