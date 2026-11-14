@@ -11,13 +11,13 @@ const BENEFITS = [
 
 /**
  * Layout halaman tamu (login, register, lupa password, dst.):
- * kiri = form, kanan = panel biru (tersembunyi di layar kecil).
+ * kiri = panel biru, kanan = form (tersembunyi di layar kecil).
  * Halaman bawaan Breeze lain yang memakai <GuestLayout> tanpa title/subtitle tetap jalan.
  */
 export default function GuestLayout({ title, subtitle, children }) {
     return (
         <div className="grid min-h-screen bg-surface font-body-md text-on-surface antialiased lg:grid-cols-2">
-            <div className="flex flex-col px-margin-mobile py-6 md:px-12">
+            <div className="flex flex-col px-margin-mobile py-6 md:px-12 lg:order-2">
                 <div className="flex items-center justify-between">
                     <Logo />
                     <Link
@@ -48,7 +48,7 @@ export default function GuestLayout({ title, subtitle, children }) {
                 </p>
             </div>
 
-            <aside className="relative hidden overflow-hidden bg-gradient-to-br from-primary-container via-tertiary to-primary p-12 text-surface-container-lowest lg:flex lg:flex-col lg:justify-center">
+            <aside className="relative hidden overflow-hidden bg-gradient-to-br from-primary-container via-tertiary to-primary p-12 text-surface-container-lowest lg:order-1 lg:flex lg:flex-col lg:justify-center">
                 <div className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full bg-secondary-container/20 blur-2xl" />
                 <div className="pointer-events-none absolute -bottom-12 -left-12 h-56 w-56 rounded-full bg-primary-fixed/15 blur-xl" />
 

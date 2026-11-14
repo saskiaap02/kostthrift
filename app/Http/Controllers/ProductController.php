@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\HomeIndexRequest;
 use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
 use App\Http\Resources\CampusResource;
 use App\Http\Resources\CategoryResource;
 use App\Http\Resources\ProductDetailResource;
+use App\Http\Resources\ProductFormResource;
 use App\Http\Resources\ProductResource;
 use App\Models\Campus;
 use App\Models\Category;
@@ -77,5 +79,51 @@ class ProductController extends Controller
         return redirect()
             ->route('products.show', $product)
             ->with('success', 'Iklanmu sudah tayang.');
+    }
+
+    /** Form Edit Iklan: GET /produk/{slug}/edit */
+    public function edit(Product $product): Response
+    {
+        Gate::authorize('update', $product);
+
+        $product->load('images');
+
+        return Inertia::render('Products/Edit', [
+            'product' => ProductFormResource::make($product)->resolve(),
+            'categories' => CategoryResource::collection(
+                Category::query()->orderBy('sort_order')->get(),
+            )->resolve(),
+            'campuses' => CampusResource::collection(Campus::selectable())->resolve(),
+        ]);
+    }
+
+    /** Simpan perubahan: PUT /produk/{slug} */
+    public function update(
+        UpdateProductRequest $request,
+        Product $product,
+        ProductPublishingService $publisher,
+    ): RedirectResponse {
+        $publisher->update(
+            $product,
+            $request->safe()->except(['images', 'image_order']),
+            $request->validated('image_order'),
+            $request->file('images', []),
+        );
+
+        return redirect()
+            ->route('products.show', $product)
+            ->with('success', 'Perubahan disimpan.');
+    }
+
+    /** Hapus iklan (soft delete): DELETE /produk/{slug} */
+    public function destroy(Product $product): RedirectResponse
+    {
+        Gate::authorize('delete', $product);
+
+        $product->delete();
+
+        return redirect()
+            ->route('my-products.index')
+            ->with('success', 'Iklan dihapus.');
     }
 }

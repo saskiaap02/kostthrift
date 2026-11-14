@@ -14,4 +14,15 @@ class ProductPolicy
         return $product->status !== ProductStatus::Draft
             || $user?->id === $product->seller_id;
     }
+
+    /** Hanya penjual yang boleh mengubah iklannya (edit, ubah status). */
+    public function update(User $user, Product $product): bool
+    {
+        return $user->id === $product->seller_id;
+    }
+
+    public function delete(User $user, Product $product): bool
+    {
+        return $user->id === $product->seller_id;
+    }
 }

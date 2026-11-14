@@ -65,6 +65,13 @@ function UserMenu({ user }) {
                         <p className="truncate text-body-sm font-body-sm text-outline">{user.email}</p>
                     </div>
                     <Link
+                        href="/iklan-saya"
+                        className="flex items-center gap-2 px-3 py-2 text-label-lg font-label-lg text-on-surface hover:bg-surface-container-low"
+                    >
+                        <Icon name="box-seam" className="text-[16px]" />
+                        Iklan Saya
+                    </Link>
+                    <Link
                         href="/profile"
                         className="flex items-center gap-2 px-3 py-2 text-label-lg font-label-lg text-on-surface hover:bg-surface-container-low"
                     >

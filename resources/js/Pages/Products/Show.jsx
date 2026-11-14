@@ -36,18 +36,18 @@ function Actions({ product, onCart, onWishlist }) {
                 </p>
                 <div className="flex flex-wrap gap-2">
                     <Link
-                        href="/"
+                        href={`/produk/${product.slug}/edit`}
                         className="flex h-10 items-center gap-1.5 rounded-xl bg-primary-container px-4 text-label-lg font-label-lg font-bold text-white transition-colors hover:bg-tertiary"
                     >
-                        <Icon name="house-door" className="text-[14px]" />
-                        Lihat di Beranda
+                        <Icon name="pencil-square" className="text-[14px]" />
+                        Edit Iklan
                     </Link>
                     <Link
-                        href="/jual"
+                        href="/iklan-saya"
                         className="flex h-10 items-center gap-1.5 rounded-xl border border-primary-container/30 bg-surface-container-lowest px-4 text-label-lg font-label-lg font-bold text-primary-container transition-colors hover:bg-surface-container-low"
                     >
-                        <Icon name="plus-lg" className="text-[13px]" />
-                        Jual Barang Lain
+                        <Icon name="box-seam" className="text-[14px]" />
+                        Iklan Saya
                     </Link>
                 </div>
             </div>
