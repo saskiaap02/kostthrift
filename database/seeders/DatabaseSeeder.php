@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             CampusSeeder::class,
             CategorySeeder::class,
             ProductSeeder::class,
+            AdminSeeder::class,
         ]);
 
         // Akun demo untuk login (password: "password")

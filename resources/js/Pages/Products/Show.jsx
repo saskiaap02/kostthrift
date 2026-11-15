@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import MarketLayout from '@/Layouts/MarketLayout';
 import Icon from '@/Components/UI/Icon';
 import ConditionBadge from '@/Components/UI/ConditionBadge';
@@ -26,7 +26,25 @@ function DetailRow({ label, value }) {
     );
 }
 
-function Actions({ product, onCart, onWishlist }) {
+function Actions({ product, isAdmin, onCart, onWishlist }) {
+    if (isAdmin) {
+        return (
+            <div className="space-y-3 rounded-xl bg-surface-container p-4">
+                <p className="flex items-start gap-2 text-body-md font-body-md text-on-surface-variant">
+                    <Icon name="shield-check" className="mt-0.5 text-[16px]" />
+                    <span>Kamu melihat halaman ini sebagai admin. Aksi pembeli dinonaktifkan.</span>
+                </p>
+                <Link
+                    href="/admin/iklan"
+                    className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-primary-container px-4 text-label-lg font-label-lg font-bold text-white hover:bg-tertiary"
+                >
+                    <Icon name="card-list" className="text-[14px]" />
+                    Kelola di Panel Admin
+                </Link>
+            </div>
+        );
+    }
+
     if (product.is_owner) {
         return (
             <div className="space-y-3 rounded-xl bg-primary-fixed/30 p-4">
@@ -98,6 +116,7 @@ function Actions({ product, onCart, onWishlist }) {
  */
 export default function Show({ product, related }) {
     const { toggleWishlist, addToCart } = useProductActions({ refresh: REFRESH });
+    const isAdmin = usePage().props.auth?.user?.role === 'admin';
 
     return (
         <MarketLayout>
@@ -171,6 +190,7 @@ export default function Show({ product, related }) {
 
                         <Actions
                             product={product}
+                            isAdmin={isAdmin}
                             onCart={() => addToCart(product)}
                             onWishlist={() => toggleWishlist(product)}
                         />

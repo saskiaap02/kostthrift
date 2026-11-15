@@ -10,6 +10,7 @@ import { router, usePage } from '@inertiajs/react';
  */
 export default function useProductActions({ refresh = [], onWishlistChange } = {}) {
     const user = usePage().props.auth?.user;
+    const isAdmin = user?.role === 'admin';
     const refreshKey = refresh.join(',');
 
     const toggleWishlist = useCallback(
@@ -18,6 +19,9 @@ export default function useProductActions({ refresh = [], onWishlistChange } = {
                 router.visit('/login');
                 return;
             }
+
+            // Akun admin hanya untuk moderasi, bukan berbelanja.
+            if (isAdmin) return;
 
             onWishlistChange?.(product, !product.is_wishlisted);
 
@@ -41,6 +45,9 @@ export default function useProductActions({ refresh = [], onWishlistChange } = {
                 router.visit('/login');
                 return;
             }
+
+            // Akun admin hanya untuk moderasi, bukan berbelanja.
+            if (isAdmin) return;
 
             router.post(
                 '/troli',

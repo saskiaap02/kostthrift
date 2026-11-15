@@ -64,6 +64,29 @@ function UserMenu({ user }) {
                         <p className="truncate text-label-lg font-label-lg font-bold text-on-surface">{user.name}</p>
                         <p className="truncate text-body-sm font-body-sm text-outline">{user.email}</p>
                     </div>
+                    {user.role === 'admin' ? (
+                        <Link
+                            href="/admin/verifikasi-ktm"
+                            className="flex items-center gap-2 px-3 py-2 text-label-lg font-label-lg text-on-surface hover:bg-surface-container-low"
+                        >
+                            <Icon name="shield-check" className="text-[16px]" />
+                            Panel Admin
+                        </Link>
+                    ) : (
+                        <Link
+                            href="/verifikasi-ktm"
+                            className="flex items-center justify-between gap-2 px-3 py-2 text-label-lg font-label-lg text-on-surface hover:bg-surface-container-low"
+                        >
+                            <span className="flex items-center gap-2">
+                                <Icon name="patch-check" className="text-[16px]" />
+                                Verifikasi KTM
+                            </span>
+                            {user.ktm_verified_at && (
+                                <Icon name="check-circle-fill" className="text-[14px] text-emerald-600" />
+                            )}
+                        </Link>
+                    )}
+                    {user.role !== 'admin' && (
                     <Link
                         href="/iklan-saya"
                         className="flex items-center gap-2 px-3 py-2 text-label-lg font-label-lg text-on-surface hover:bg-surface-container-low"
@@ -71,6 +94,7 @@ function UserMenu({ user }) {
                         <Icon name="box-seam" className="text-[16px]" />
                         Iklan Saya
                     </Link>
+                    )}
                     <Link
                         href="/profile"
                         className="flex items-center gap-2 px-3 py-2 text-label-lg font-label-lg text-on-surface hover:bg-surface-container-low"
@@ -96,6 +120,7 @@ function UserMenu({ user }) {
 export default function Navbar() {
     const { props } = usePage();
     const user = props.auth?.user;
+    const isAdmin = user?.role === 'admin';
     // Langkah 4: counts dibagikan dari HandleInertiaRequests::share()
     const counts = props.counts ?? {};
 
@@ -104,9 +129,21 @@ export default function Navbar() {
             <div className="mx-auto flex w-full max-w-[1200px] flex-wrap items-center gap-x-4 gap-y-2.5 px-margin-mobile py-3 md:flex-nowrap md:px-margin">
                 <Logo />
 
-                <SearchBar className="order-last w-full basis-full md:order-none md:mx-auto md:max-w-xl md:flex-1 md:basis-auto" />
+                {!isAdmin && (
+                    <SearchBar className="order-last w-full basis-full md:order-none md:mx-auto md:max-w-xl md:flex-1 md:basis-auto" />
+                )}
 
-                <div className="ml-auto flex items-center gap-1 md:ml-0">
+                <div className={`flex items-center gap-1 ${isAdmin ? 'ml-auto' : 'ml-auto md:ml-0'}`}>
+                    {isAdmin ? (
+                        <Link
+                            href="/admin"
+                            className="mx-1 flex h-10 items-center gap-1.5 rounded-full bg-primary-container px-4 text-label-lg font-label-lg font-bold text-white transition-colors hover:bg-tertiary"
+                        >
+                            <Icon name="speedometer2" className="text-[14px]" />
+                            <span>Panel Admin</span>
+                        </Link>
+                    ) : (
+                        <>
                     <IconButton
                         icon="heart"
                         label="Wishlist"
@@ -128,6 +165,9 @@ export default function Navbar() {
                         <Icon name="plus-lg" className="text-[14px]" />
                         <span>Jual</span>
                     </Link>
+
+                        </>
+                    )}
 
                     {user ? (
                         <UserMenu user={user} />
