@@ -23,6 +23,7 @@ class ProductResource extends JsonResource
             'condition_label' => $this->condition->label(),
             'location_label' => $this->location_label,
             'image_url' => $this->primaryImage?->url,
+            'status' => $this->status->value,
             'is_wishlisted' => (bool) ($this->is_wishlisted ?? false),
             'seller' => [
                 'name' => $this->seller->name,

@@ -25,8 +25,11 @@ export default function ProductCard({ product, onToggleWishlist, onAddToCart }) 
         location_label,
         image_url,
         is_wishlisted,
+        status,
         seller,
     } = product;
+
+    const sold = status === 'sold';
 
     const href = `/produk/${slug}`;
 
@@ -39,7 +42,9 @@ export default function ProductCard({ product, onToggleWishlist, onAddToCart }) 
                             src={image_url}
                             alt={title}
                             loading="lazy"
-                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            className={`h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 ${
+                                sold ? 'opacity-50 grayscale' : ''
+                            }`}
                         />
                     ) : (
                         <div className="flex h-full w-full items-center justify-center text-outline">
@@ -47,11 +52,17 @@ export default function ProductCard({ product, onToggleWishlist, onAddToCart }) 
                         </div>
                     )}
                 </Link>
-                <ConditionBadge
-                    condition={condition}
-                    label={condition_label}
-                    className="absolute left-2 top-2"
-                />
+                {sold ? (
+                    <span className="absolute left-2 top-2 rounded-full bg-on-surface/80 px-2 py-0.5 text-label-sm font-label-sm font-bold text-white">
+                        Terjual
+                    </span>
+                ) : (
+                    <ConditionBadge
+                        condition={condition}
+                        label={condition_label}
+                        className="absolute left-2 top-2"
+                    />
+                )}
                 <WishlistButton active={is_wishlisted} onToggle={() => onToggleWishlist?.(product)} />
             </div>
 
@@ -75,10 +86,11 @@ export default function ProductCard({ product, onToggleWishlist, onAddToCart }) 
                         <button
                             type="button"
                             onClick={() => onAddToCart?.(product)}
-                            className="flex h-9 items-center justify-center gap-0.5 rounded-lg bg-primary-container text-label-sm font-label-sm font-bold text-surface-container-lowest transition-transform hover:bg-tertiary active:scale-95"
+                            disabled={sold}
+                            className="flex h-9 items-center justify-center gap-0.5 rounded-lg bg-primary-container text-label-sm font-label-sm font-bold text-surface-container-lowest transition-transform hover:bg-tertiary active:scale-95 disabled:cursor-not-allowed disabled:bg-surface-container disabled:text-on-surface-variant disabled:active:scale-100"
                         >
-                            <Icon name="bag-plus" className="text-[14px]" />
-                            <span>Troli</span>
+                            <Icon name={sold ? 'x-circle' : 'bag-plus'} className="text-[14px]" />
+                            <span>{sold ? 'Terjual' : 'Troli'}</span>
                         </button>
                         <Link
                             href={href}

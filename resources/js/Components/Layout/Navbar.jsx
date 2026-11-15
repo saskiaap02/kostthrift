@@ -111,9 +111,9 @@ export default function Navbar() {
                         icon="heart"
                         label="Wishlist"
                         count={counts.wishlist}
-                        href={user ? null : '/login'}
+                        href={user ? '/wishlist' : '/login'}
                     />
-                    <IconButton icon="bag" label="Keranjang" count={counts.cart} href={user ? null : '/login'} />
+                    <IconButton icon="bag" label="Troli" count={counts.cart} href={user ? '/troli' : '/login'} />
                     <IconButton
                         icon="chat-dots"
                         label="Pesan"

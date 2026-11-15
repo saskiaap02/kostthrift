@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\CartItemController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MyProductController;
@@ -33,9 +34,14 @@ Route::middleware('auth')->group(function () {
     Route::delete('/produk/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
     Route::patch('/produk/{product}/status', [ProductStatusController::class, 'update'])->name('products.status.update');
 
-    // Wishlist & Troli
+    // Wishlist
+    Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
     Route::post('/wishlist/{product}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
+
+    // Troli
+    Route::get('/troli', [CartController::class, 'index'])->name('cart.index');
     Route::post('/troli', [CartItemController::class, 'store'])->name('cart.items.store');
+    Route::delete('/troli/{product}', [CartItemController::class, 'destroy'])->name('cart.items.destroy');
 
     // Profile bawaan Breeze
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
