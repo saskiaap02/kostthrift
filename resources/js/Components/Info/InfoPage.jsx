@@ -14,7 +14,7 @@ export default function InfoPage({ title, intro, updatedAt, notice, sections = [
         <MarketLayout>
             <Head title={title} />
 
-            <div className="mx-auto w-full max-w-3xl px-margin-mobile pb-6 pt-6 md:px-margin">
+            <div className="mx-auto w-full max-w-3xl px-margin-mobile pb-10 pt-6 md:px-margin">
                 <Link
                     href="/"
                     className="mb-4 inline-flex items-center gap-1.5 text-label-lg font-label-lg font-bold text-primary-container hover:underline"
@@ -22,6 +22,29 @@ export default function InfoPage({ title, intro, updatedAt, notice, sections = [
                     <Icon name="arrow-left" className="text-[13px]" />
                     Kembali ke Beranda
                 </Link>
+
+                {/* Navigasi antar halaman informasi dipindah ke atas */}
+                <nav
+                    aria-label="Navigasi halaman informasi"
+                    className="mb-6 flex flex-wrap gap-2 border-b border-outline-variant/30 pb-4"
+                >
+                    {INFO_LINKS.map((link) => {
+                        const isActive = link.href === path;
+                        return (
+                            <Link
+                                key={link.href}
+                                href={link.href}
+                                className={`rounded-full px-3.5 py-1.5 text-label-md font-label-md font-semibold transition ${
+                                    isActive
+                                        ? 'bg-primary text-on-primary shadow-sm'
+                                        : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+                                }`}
+                            >
+                                {link.label}
+                            </Link>
+                        );
+                    })}
+                </nav>
 
                 <h1 className="font-headline-lg text-headline-md font-extrabold text-on-surface md:text-headline-lg">
                     {title}
@@ -63,19 +86,6 @@ export default function InfoPage({ title, intro, updatedAt, notice, sections = [
                     ))}
                     {children}
                 </div>
-
-                <nav aria-label="Halaman informasi lain" className="mt-10 border-t border-outline-variant/30 pt-5">
-                    <p className="mb-2 text-label-lg font-label-lg font-bold text-on-surface">Halaman lain</p>
-                    <ul className="flex flex-wrap gap-x-5 gap-y-1.5">
-                        {INFO_LINKS.filter((link) => link.href !== path).map((link) => (
-                            <li key={link.href}>
-                                <Link href={link.href} className="text-body-md font-body-md font-bold text-primary-container hover:underline">
-                                    {link.label}
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
-                </nav>
             </div>
         </MarketLayout>
     );
