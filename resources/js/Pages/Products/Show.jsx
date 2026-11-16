@@ -12,7 +12,7 @@ import { formatRupiah, initials } from '@/Lib/format';
 const REFRESH = ['product', 'related'];
 
 const ASSURANCES = [
-    { icon: 'shield-lock', text: 'Dana aman lewat rekber KosThrift sampai barang kamu terima.' },
+    { icon: 'shield-lock', text: 'Penjual dan pembeli adalah mahasiswa yang sudah diverifikasi KTM.' },
     { icon: 'geo-alt', text: 'COD di titik ramai kampus, tanpa ongkir.' },
     { icon: 'search', text: 'Cek barang langsung sebelum membayar.' },
 ];

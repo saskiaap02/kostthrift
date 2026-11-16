@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\UserDirectoryController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CartItemController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\InfoPageController;
 use App\Http\Controllers\KtmVerificationController;
 use App\Http\Controllers\MyProductController;
 use App\Http\Controllers\ProductController;
@@ -23,6 +24,15 @@ use Inertia\Inertia;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/produk', [ProductController::class, 'index'])->name('products.index');
 Route::get('/produk/{product}', [ProductController::class, 'show'])->name('products.show');
+
+// Route Halaman Informasi & Bantuan (Publik)
+Route::controller(InfoPageController::class)->group(function () {
+    Route::get('/syarat-ketentuan', 'terms')->name('info.terms');
+    Route::get('/kebijakan-privasi', 'privacy')->name('info.privacy');
+    Route::get('/bantuan', 'help')->name('info.help');
+    Route::get('/panduan-transaksi', 'guide')->name('info.guide');
+    Route::get('/titik-temu-cod', 'meetup')->name('info.meetup');
+});
 
 // Route Dashboard bawaan Breeze
 Route::get('/dashboard', function () {

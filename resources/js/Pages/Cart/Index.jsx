@@ -205,7 +205,7 @@ export default function Index({ groups, summary }) {
                                 Lanjut ke Pembayaran
                             </button>
                             <p className="text-center text-body-sm font-body-sm text-on-surface-variant">
-                                Checkout dan rekber segera hadir.
+                                Checkout segera hadir.
                             </p>
 
                             <p className="flex items-start gap-2 rounded-xl bg-surface-container-low/70 p-3 text-body-sm font-body-sm text-on-surface-variant">

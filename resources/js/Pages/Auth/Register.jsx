@@ -97,6 +97,18 @@ export default function Register({ campuses }) {
                     />
                 </FormField>
 
+                <p className="text-center text-body-sm font-body-sm text-on-surface-variant">
+                    Dengan mendaftar, kamu menyetujui{' '}
+                    <Link href="/syarat-ketentuan" className="font-bold text-primary-container hover:underline">
+                        Syarat &amp; Ketentuan
+                    </Link>{' '}
+                    dan{' '}
+                    <Link href="/kebijakan-privasi" className="font-bold text-primary-container hover:underline">
+                        Kebijakan Privasi
+                    </Link>
+                    .
+                </p>
+
                 <button
                     type="submit"
                     disabled={processing}

@@ -19,8 +19,8 @@ export default function Hero({ image }) {
                         </h1>
 
                         <p className="mt-3 max-w-[460px] text-body-md font-body-md leading-relaxed text-surface-container-low/90 md:text-body-lg">
-                            Jual beli perlengkapan kos antar mahasiswa. 100% aman dengan verifikasi KTM &amp; garansi
-                            rekber kampus.
+                            Jual beli perlengkapan kos antar mahasiswa. Penjual dan pembeli terverifikasi KTM, bayar
+                            langsung atau COD di kampus.
                         </p>
 
                         <div className="mt-6 flex flex-col gap-space-sm sm:flex-row">

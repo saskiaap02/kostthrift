@@ -5,7 +5,7 @@ import { heroImage } from '@/Data/assets';
 
 const BENEFITS = [
     { icon: 'mortarboard', text: 'Penjual terverifikasi KTM mahasiswa aktif' },
-    { icon: 'shield-lock', text: 'Rekber aman: dana ditahan sampai barang diterima' },
+    { icon: 'shield-lock', text: 'Bayar langsung ke penjual, KosThrift tidak memegang uangmu' },
     { icon: 'box-seam', text: 'COD di kampus, bebas ongkir' },
 ];
 
@@ -62,7 +62,7 @@ export default function GuestLayout({ title, subtitle, children }) {
                         Pasar Aman &amp; Praktis Anak Kos
                     </h2>
                     <p className="mt-3 text-body-lg font-body-lg leading-relaxed text-surface-container-low/90">
-                        Jual beli perlengkapan kos antar mahasiswa, dengan verifikasi KTM dan garansi rekber kampus.
+                        Jual beli perlengkapan kos antar mahasiswa, dengan penjual dan pembeli yang terverifikasi KTM.
                     </p>
 
                     <div className="relative mt-7 overflow-hidden rounded-2xl border border-surface-container-lowest/20 bg-surface-container-lowest/5 shadow-lg">

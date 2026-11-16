@@ -5,13 +5,13 @@ const ITEMS = [
         icon: 'mortarboard',
         iconClass: 'bg-blue-100 text-blue-700',
         title: 'Mahasiswa Terverifikasi KTM',
-        text: 'Penjual diverifikasi kartu mahasiswa aktif kampus, transaksi terpercaya tanpa tipu-tipu akun bodong.',
+        text: 'Penjual dan pembeli diverifikasi lewat kartu mahasiswa aktif, supaya transaksi hanya antar mahasiswa.',
     },
     {
         icon: 'shield-lock',
         iconClass: 'bg-emerald-100 text-emerald-700',
-        title: 'In-App Rekber Aman',
-        text: 'Dana pembeli disimpan aman di rekening bersama KosThrift hingga barang diterima dan dicek langsung.',
+        title: 'Transaksi Langsung',
+        text: 'Bayar langsung ke penjual atau COD. KosThrift tidak memegang uangmu, jadi cek barang dulu sebelum membayar.',
     },
     {
         icon: 'box-seam',
