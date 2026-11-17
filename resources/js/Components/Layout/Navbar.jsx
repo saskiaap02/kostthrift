@@ -40,6 +40,7 @@ function UserMenu({ user }) {
     const [open, setOpen] = useState(false);
     const ref = useRef(null);
     useClickOutside(ref, () => setOpen(false));
+    const incoming = usePage().props.counts?.orders_incoming ?? 0;
 
     return (
         <div ref={ref} className="relative">
@@ -55,6 +56,9 @@ function UserMenu({ user }) {
                 </div>
                 {user.ktm_verified_at && (
                     <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border border-surface-container-lowest bg-emerald-500" />
+                )}
+                {incoming > 0 && (
+                    <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-surface-container-lowest bg-orange-500" />
                 )}
             </button>
 
@@ -87,13 +91,36 @@ function UserMenu({ user }) {
                         </Link>
                     )}
                     {user.role !== 'admin' && (
-                    <Link
-                        href="/iklan-saya"
-                        className="flex items-center gap-2 px-3 py-2 text-label-lg font-label-lg text-on-surface hover:bg-surface-container-low"
-                    >
-                        <Icon name="box-seam" className="text-[16px]" />
-                        Iklan Saya
-                    </Link>
+                        <>
+                            <Link
+                                href="/iklan-saya"
+                                className="flex items-center gap-2 px-3 py-2 text-label-lg font-label-lg text-on-surface hover:bg-surface-container-low"
+                            >
+                                <Icon name="box-seam" className="text-[16px]" />
+                                Iklan Saya
+                            </Link>
+                            <Link
+                                href="/pesanan"
+                                className="flex items-center justify-between gap-2 px-3 py-2 text-label-lg font-label-lg text-on-surface hover:bg-surface-container-low"
+                            >
+                                <span className="flex items-center gap-2">
+                                    <Icon name="receipt" className="text-[16px]" />
+                                    Pesanan
+                                </span>
+                                {incoming > 0 && (
+                                    <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-orange-500 px-1 text-[10px] font-bold text-white">
+                                        {incoming}
+                                    </span>
+                                )}
+                            </Link>
+                            <Link
+                                href="/pengaturan/pembayaran"
+                                className="flex items-center gap-2 px-3 py-2 text-label-lg font-label-lg text-on-surface hover:bg-surface-container-low"
+                            >
+                                <Icon name="credit-card" className="text-[16px]" />
+                                Rekening Pembayaran
+                            </Link>
+                        </>
                     )}
                     <Link
                         href="/profile"

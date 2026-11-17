@@ -6,10 +6,14 @@ use App\Http\Controllers\Admin\ProductModerationController;
 use App\Http\Controllers\Admin\UserDirectoryController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CartItemController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InfoPageController;
 use App\Http\Controllers\KtmVerificationController;
 use App\Http\Controllers\MyProductController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\OrderTransitionController;
+use App\Http\Controllers\PaymentAccountController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductStatusController;
 use App\Http\Controllers\ProfileController;
@@ -67,6 +71,26 @@ Route::middleware('auth')->group(function () {
         Route::get('/troli', [CartController::class, 'index'])->name('cart.index');
         Route::post('/troli', [CartItemController::class, 'store'])->name('cart.items.store');
         Route::delete('/troli/{product}', [CartItemController::class, 'destroy'])->name('cart.items.destroy');
+
+        // Checkout: WAJIB terverifikasi KTM (pembeli maupun penjual)
+        Route::get('/checkout/{seller}', [CheckoutController::class, 'show'])
+            ->middleware(EnsureKtmVerified::class)->name('checkout.show');
+        Route::post('/pesanan', [CheckoutController::class, 'store'])
+            ->middleware(EnsureKtmVerified::class)->name('orders.store');
+
+        // Pesanan
+        Route::get('/pesanan', [OrderController::class, 'index'])->name('orders.index');
+        Route::get('/pesanan/{order}', [OrderController::class, 'show'])->name('orders.show');
+        Route::post('/pesanan/{order}/setujui', [OrderTransitionController::class, 'accept'])->name('orders.accept');
+        Route::post('/pesanan/{order}/batalkan', [OrderTransitionController::class, 'cancel'])->name('orders.cancel');
+        Route::post('/pesanan/{order}/lapor-bayar', [OrderTransitionController::class, 'reportPayment'])->name('orders.report-payment');
+        Route::post('/pesanan/{order}/konfirmasi-bayar', [OrderTransitionController::class, 'confirmPayment'])->name('orders.confirm-payment');
+        Route::post('/pesanan/{order}/selesai', [OrderTransitionController::class, 'complete'])->name('orders.complete');
+
+        // Akun pembayaran penjual (rekening / e-wallet)
+        Route::get('/pengaturan/pembayaran', [PaymentAccountController::class, 'index'])->name('payment-accounts.index');
+        Route::post('/pengaturan/pembayaran', [PaymentAccountController::class, 'store'])->name('payment-accounts.store');
+        Route::delete('/pengaturan/pembayaran/{paymentAccount}', [PaymentAccountController::class, 'destroy'])->name('payment-accounts.destroy');
 
         // Verifikasi KTM (halaman pengguna)
         Route::get('/verifikasi-ktm', [KtmVerificationController::class, 'show'])->name('ktm.show');

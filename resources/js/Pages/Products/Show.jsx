@@ -72,11 +72,15 @@ function Actions({ product, isAdmin, onCart, onWishlist }) {
         );
     }
 
-    if (product.status === 'sold') {
+    if (product.status !== 'active') {
         return (
             <div className="flex items-center gap-2 rounded-xl bg-surface-container p-4 text-body-md font-body-md font-semibold text-on-surface-variant">
                 <Icon name="check-circle-fill" className="text-[16px]" />
-                <span>Barang ini sudah terjual.</span>
+                <span>
+                    {product.status === 'reserved'
+                        ? 'Barang ini sedang dipesan pembeli lain.'
+                        : 'Barang ini sudah terjual.'}
+                </span>
             </div>
         );
     }
@@ -150,7 +154,7 @@ export default function Show({ product, related }) {
                         <div>
                             <div className="mb-2 flex flex-wrap items-center gap-2">
                                 <ConditionBadge condition={product.condition} label={product.condition_label} />
-                                {product.status === 'sold' && (
+                                {product.status !== 'active' && (
                                     <span className="rounded-full bg-surface-container px-2 py-0.5 text-label-sm font-label-sm font-bold text-on-surface-variant">
                                         {product.status_label}
                                     </span>

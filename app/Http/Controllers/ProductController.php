@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ProductStatus;
 use App\Http\Requests\HomeIndexRequest;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
@@ -119,6 +120,8 @@ class ProductController extends Controller
     public function destroy(Product $product): RedirectResponse
     {
         Gate::authorize('delete', $product);
+
+        abort_if($product->status === ProductStatus::Reserved, 409, 'Iklan sedang dipesan.');
 
         $product->delete();
 

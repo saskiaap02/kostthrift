@@ -78,15 +78,15 @@ export default function Show({ verified, verification, universities }) {
                     Verifikasi KTM
                 </h1>
                 <p className="mt-1 text-body-md font-body-md text-on-surface-variant">
-                    KosThrift khusus mahasiswa. Penjual wajib terverifikasi sebagai mahasiswa aktif sebelum memasang
-                    iklan.
+                    KosThrift khusus mahasiswa. Penjual dan pembeli wajib terverifikasi sebagai mahasiswa aktif sebelum memasang
+                    iklan atau checkout.
                 </p>
 
                 <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
                     <div className="space-y-4">
                         {verified && (
                             <StatusCard icon="check-circle-fill" tone="success" title="Akunmu sudah terverifikasi">
-                                <p>Kamu sudah bisa memasang iklan. Badge "Terverifikasi KTM" tampil di iklanmu.</p>
+                                <p>Kamu sudah bisa memasang iklan dan checkout. Badge "Terverifikasi KTM" tampil di profil dan iklanmu.</p>
                                 <Link
                                     href="/jual"
                                     className="mt-4 inline-flex h-11 items-center gap-2 rounded-xl bg-primary-container px-5 text-label-lg font-label-lg font-bold text-white transition-colors hover:bg-tertiary"

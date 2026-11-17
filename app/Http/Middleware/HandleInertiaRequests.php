@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\OrderStatus;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -37,6 +39,11 @@ class HandleInertiaRequests extends Middleware
             'counts' => fn () => $request->user() ? [
                 'wishlist' => $request->user()->wishlistedProducts()->count(),
                 'cart' => $request->user()->cartProducts()->count(),
+                // jumlah pesanan masuk yang menunggu persetujuan penjual (lencana di menu avatar)
+                'orders_incoming' => Order::query()
+                    ->where('seller_id', $request->user()->id)
+                    ->where('status', OrderStatus::Pending->value)
+                    ->count(),
                 'unread_chats' => 0,
             ] : null,
             'flash' => fn () => [

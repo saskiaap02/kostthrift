@@ -19,6 +19,7 @@ function StatusPill({ status, label }) {
     const styles = {
         active: 'bg-emerald-500/15 text-emerald-700',
         sold: 'bg-surface-container text-on-surface-variant',
+        reserved: 'bg-blue-500/15 text-blue-700',
         draft: 'bg-amber-500/15 text-amber-700',
     };
 
@@ -31,6 +32,7 @@ function StatusPill({ status, label }) {
 
 function ListingRow({ product, onSold, onActivate, onDelete }) {
     const sold = product.status === 'sold';
+    const reserved = product.status === 'reserved';
 
     return (
         <article className="flex flex-col gap-4 rounded-2xl border border-outline-variant/40 bg-surface-container-lowest p-4 shadow-sm md:flex-row md:items-center">
@@ -91,7 +93,11 @@ function ListingRow({ product, onSold, onActivate, onDelete }) {
                     Edit
                 </Link>
 
-                {sold ? (
+                {reserved ? (
+                    <span className={`${actionClass} cursor-default bg-surface-container text-on-surface-variant`}>
+                        Sedang dipesan
+                    </span>
+                ) : sold ? (
                     <button
                         type="button"
                         onClick={() => onActivate(product)}
@@ -111,6 +117,7 @@ function ListingRow({ product, onSold, onActivate, onDelete }) {
                     </button>
                 )}
 
+                {!reserved && (
                 <button
                     type="button"
                     onClick={() => onDelete(product)}
@@ -120,6 +127,7 @@ function ListingRow({ product, onSold, onActivate, onDelete }) {
                     <Icon name="trash3" className="text-[13px]" />
                     Hapus
                 </button>
+                )}
             </div>
         </article>
     );

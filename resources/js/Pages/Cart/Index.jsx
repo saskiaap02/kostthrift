@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import MarketLayout from '@/Layouts/MarketLayout';
 import Icon from '@/Components/UI/Icon';
 import ConditionBadge from '@/Components/UI/ConditionBadge';
@@ -6,7 +6,8 @@ import VerifiedBadge from '@/Components/UI/VerifiedBadge';
 import { formatRupiah, initials } from '@/Lib/format';
 
 function CartItem({ product, onRemove }) {
-    const sold = product.status === 'sold';
+    const sold = product.status !== 'active'; // terjual atau sedang dipesan
+    const reserved = product.status === 'reserved';
     const href = `/produk/${product.slug}`;
 
     return (
@@ -40,7 +41,7 @@ function CartItem({ product, onRemove }) {
                 <div className="mt-1.5 flex flex-wrap items-center gap-2">
                     {sold ? (
                         <span className="rounded-full bg-on-surface/80 px-2 py-0.5 text-label-sm font-label-sm font-bold text-white">
-                            Terjual
+                            {reserved ? 'Dipesan' : 'Terjual'}
                         </span>
                     ) : (
                         <ConditionBadge condition={product.condition} label={product.condition_label} />
@@ -68,7 +69,9 @@ function CartItem({ product, onRemove }) {
 
                 {sold && (
                     <p className="mt-1 text-body-sm font-body-sm font-semibold text-error">
-                        Barang ini sudah terjual. Hapus dari troli.
+                        {reserved
+                            ? 'Barang ini sedang dipesan pembeli lain. Hapus dari troli atau tunggu bila pesanannya dibatalkan.'
+                            : 'Barang ini sudah terjual. Hapus dari troli.'}
                     </p>
                 )}
             </div>
@@ -99,6 +102,7 @@ export default function Index({ groups, summary }) {
     };
 
     const hasSold = summary.items > summary.available;
+    const verified = Boolean(usePage().props.auth?.user?.ktm_verified_at);
 
     return (
         <MarketLayout>
@@ -165,6 +169,25 @@ export default function Index({ groups, summary }) {
                                             {formatRupiah(group.subtotal)}
                                         </span>
                                     </div>
+
+                                    {group.available_count > 0 &&
+                                        (verified ? (
+                                            <Link
+                                                href={`/checkout/${group.seller.id}`}
+                                                className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary-container text-label-lg font-label-lg font-bold text-white transition-colors hover:bg-tertiary"
+                                            >
+                                                <Icon name="bag-check" className="text-[15px]" />
+                                                Checkout dari {group.seller.name}
+                                            </Link>
+                                        ) : (
+                                            <Link
+                                                href="/verifikasi-ktm"
+                                                className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-primary-container/40 text-label-lg font-label-lg font-bold text-primary-container hover:bg-primary-fixed/20"
+                                            >
+                                                <Icon name="patch-check" className="text-[15px]" />
+                                                Verifikasi KTM untuk checkout
+                                            </Link>
+                                        ))}
                                 </section>
                             ))}
                         </div>
@@ -192,20 +215,13 @@ export default function Index({ groups, summary }) {
                             {hasSold && (
                                 <p className="flex items-start gap-2 rounded-xl bg-error/5 p-3 text-body-sm font-body-sm text-error">
                                     <Icon name="exclamation-triangle-fill" className="mt-0.5 text-[13px]" />
-                                    <span>Ada barang yang sudah terjual dan tidak ikut dihitung. Hapus dari troli.</span>
+                                    <span>Ada barang yang tidak tersedia (terjual atau dipesan) dan tidak ikut dihitung.</span>
                                 </p>
                             )}
 
-                            <button
-                                type="button"
-                                disabled
-                                className="flex h-12 w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-surface-container text-label-lg font-label-lg font-bold text-on-surface-variant"
-                            >
-                                <Icon name="lock" className="text-[14px]" />
-                                Lanjut ke Pembayaran
-                            </button>
-                            <p className="text-center text-body-sm font-body-sm text-on-surface-variant">
-                                Checkout segera hadir.
+                            <p className="flex items-start gap-2 rounded-xl bg-surface-container-low/70 p-3 text-body-sm font-body-sm text-on-surface-variant">
+                                <Icon name="info-circle" className="mt-0.5 text-[13px] text-primary" />
+                                <span>Checkout dilakukan per penjual. Pakai tombol Checkout di tiap kelompok barang.</span>
                             </p>
 
                             <p className="flex items-start gap-2 rounded-xl bg-surface-container-low/70 p-3 text-body-sm font-body-sm text-on-surface-variant">

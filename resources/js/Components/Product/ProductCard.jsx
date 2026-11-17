@@ -29,7 +29,8 @@ export default function ProductCard({ product, onToggleWishlist, onAddToCart }) 
         seller,
     } = product;
 
-    const sold = status === 'sold';
+    const sold = status !== 'active'; // terjual atau sedang dipesan
+    const soldLabel = status === 'reserved' ? 'Dipesan' : 'Terjual';
 
     const href = `/produk/${slug}`;
 
@@ -54,7 +55,7 @@ export default function ProductCard({ product, onToggleWishlist, onAddToCart }) 
                 </Link>
                 {sold ? (
                     <span className="absolute left-2 top-2 rounded-full bg-on-surface/80 px-2 py-0.5 text-label-sm font-label-sm font-bold text-white">
-                        Terjual
+                        {soldLabel}
                     </span>
                 ) : (
                     <ConditionBadge
@@ -90,7 +91,7 @@ export default function ProductCard({ product, onToggleWishlist, onAddToCart }) 
                             className="flex h-9 items-center justify-center gap-0.5 rounded-lg bg-primary-container text-label-sm font-label-sm font-bold text-surface-container-lowest transition-transform hover:bg-tertiary active:scale-95 disabled:cursor-not-allowed disabled:bg-surface-container disabled:text-on-surface-variant disabled:active:scale-100"
                         >
                             <Icon name={sold ? 'x-circle' : 'bag-plus'} className="text-[14px]" />
-                            <span>{sold ? 'Terjual' : 'Troli'}</span>
+                            <span>{sold ? soldLabel : 'Troli'}</span>
                         </button>
                         <Link
                             href={href}
