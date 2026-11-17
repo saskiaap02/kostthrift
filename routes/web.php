@@ -50,11 +50,13 @@ Route::middleware('auth')->group(function () {
 
     // Pembeli dan penjual. Akun admin dialihkan ke panel admin.
     Route::middleware(EnsureNotAdmin::class)->group(function () {
-        // Jual: WAJIB mahasiswa terverifikasi KTM
+        // Jual & AI Foto Produk: WAJIB mahasiswa terverifikasi KTM
         Route::get('/jual', [ProductController::class, 'create'])
             ->middleware(EnsureKtmVerified::class)->name('products.create');
         Route::post('/produk', [ProductController::class, 'store'])
             ->middleware(EnsureKtmVerified::class)->name('products.store');
+        Route::post('/produk/analisis-foto', [ProductController::class, 'analyzePhoto'])
+            ->middleware([EnsureKtmVerified::class, 'throttle:10,5'])->name('products.analyze-photo');
 
         // Iklan Saya: daftar, edit, hapus, tandai terjual
         Route::get('/iklan-saya', [MyProductController::class, 'index'])->name('my-products.index');
@@ -78,7 +80,6 @@ Route::middleware('auth')->group(function () {
         Route::post('/pesanan', [CheckoutController::class, 'store'])
             ->middleware(EnsureKtmVerified::class)->name('orders.store');
 
-        // Pesanan
         // Pesanan
         Route::get('/pesanan', [OrderController::class, 'index'])->name('orders.index');
         Route::get('/pesanan/{order}', [OrderController::class, 'show'])->name('orders.show');

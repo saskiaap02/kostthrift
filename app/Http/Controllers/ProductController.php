@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ProductStatus;
+use App\Http\Requests\AnalyzeProductPhotoRequest;
 use App\Http\Requests\HomeIndexRequest;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
@@ -14,8 +15,10 @@ use App\Http\Resources\ProductResource;
 use App\Models\Campus;
 use App\Models\Category;
 use App\Models\Product;
+use App\Services\ProductAiService;
 use App\Services\ProductPublishingService;
 use App\Services\ProductQueryService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -114,6 +117,14 @@ class ProductController extends Controller
         return redirect()
             ->route('products.show', $product)
             ->with('success', 'Perubahan disimpan.');
+    }
+
+    /** Analisis foto barang dengan AI untuk mengisi form Jual: POST /produk/analisis-foto */
+    public function analyzePhoto(AnalyzeProductPhotoRequest $request, ProductAiService $ai): JsonResponse
+    {
+        return response()->json([
+            'suggestion' => $ai->suggestFromPhoto($request->file('image')),
+        ]);
     }
 
     /** Hapus iklan (soft delete): DELETE /produk/{slug} */
