@@ -123,6 +123,7 @@ export default function Show({ product, related }) {
     const isAdmin = authUser?.role === 'admin';
     const { toggleWishlist, addToCart } = useProductActions(REFRESH);
 
+
     const handleAskSeller = () => {
         if (!authUser) {
             router.visit('/login');
