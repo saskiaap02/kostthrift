@@ -21,6 +21,7 @@ use App\Http\Controllers\WishlistController;
 use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\EnsureKtmVerified;
 use App\Http\Middleware\EnsureNotAdmin;
+use App\Http\Controllers\ConversationController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -100,6 +101,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/verifikasi-ktm', [KtmVerificationController::class, 'store'])
             ->middleware('throttle:5,10')->name('ktm.store');
     });
+
+    // Pesan / Chat antar pengguna
+        Route::get('/pesan', [ConversationController::class, 'index'])->name('chat.index');
+        Route::post('/pesan/mulai', [ConversationController::class, 'start'])->name('chat.start');
+        Route::get('/pesan/{conversation}', [ConversationController::class, 'index'])->name('chat.show');
+        Route::post('/pesan/{conversation}/kirim', [ConversationController::class, 'storeMessage'])->name('chat.messages.store');
 
     // Panel admin
     Route::middleware(EnsureAdmin::class)->prefix('admin')->name('admin.')->group(function () {
