@@ -1,9 +1,8 @@
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
-import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, useForm } from '@inertiajs/react';
+import GuestLayout from '@/Layouts/GuestLayout';
+import Icon from '@/Components/UI/Icon';
+import FormField, { inputClass } from '@/Components/UI/FormField';
+import PasswordInput from '@/Components/UI/PasswordInput';
 
 export default function ResetPassword({ token, email }) {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -13,81 +12,61 @@ export default function ResetPassword({ token, email }) {
         password_confirmation: '',
     });
 
-    const submit = (e) => {
-        e.preventDefault();
-
-        post(route('password.store'), {
+    const submit = (event) => {
+        event.preventDefault();
+        post('/reset-password', {
             onFinish: () => reset('password', 'password_confirmation'),
         });
     };
 
     return (
-        <GuestLayout>
+        <GuestLayout
+            title="Buat Password Baru"
+            subtitle="Masukkan password baru yang kuat untuk mengamankan akun KosThrift-mu."
+        >
             <Head title="Reset Password" />
 
-            <form onSubmit={submit}>
-                <div>
-                    <InputLabel htmlFor="email" value="Email" />
-
-                    <TextInput
+            <form onSubmit={submit} className="space-y-4">
+                <FormField label="Email" htmlFor="email" error={errors.email}>
+                    <input
                         id="email"
                         type="email"
-                        name="email"
                         value={data.email}
-                        className="mt-1 block w-full"
+                        onChange={(event) => setData('email', event.target.value)}
                         autoComplete="username"
-                        onChange={(e) => setData('email', e.target.value)}
+                        className={inputClass}
                     />
+                </FormField>
 
-                    <InputError message={errors.email} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
-
-                    <TextInput
+                <FormField label="Password baru" htmlFor="password" error={errors.password}>
+                    <PasswordInput
                         id="password"
-                        type="password"
-                        name="password"
                         value={data.password}
-                        className="mt-1 block w-full"
+                        onChange={(value) => setData('password', value)}
                         autoComplete="new-password"
-                        isFocused={true}
-                        onChange={(e) => setData('password', e.target.value)}
+                        autoFocus
+                        invalid={Boolean(errors.password)}
                     />
+                </FormField>
 
-                    <InputError message={errors.password} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel
-                        htmlFor="password_confirmation"
-                        value="Confirm Password"
-                    />
-
-                    <TextInput
-                        type="password"
+                <FormField label="Konfirmasi password baru" htmlFor="password_confirmation" error={errors.password_confirmation}>
+                    <PasswordInput
                         id="password_confirmation"
-                        name="password_confirmation"
                         value={data.password_confirmation}
-                        className="mt-1 block w-full"
+                        onChange={(value) => setData('password_confirmation', value)}
                         autoComplete="new-password"
-                        onChange={(e) =>
-                            setData('password_confirmation', e.target.value)
-                        }
+                        invalid={Boolean(errors.password_confirmation)}
                     />
+                </FormField>
 
-                    <InputError
-                        message={errors.password_confirmation}
-                        className="mt-2"
-                    />
-                </div>
-
-                <div className="mt-4 flex items-center justify-end">
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Reset Password
-                    </PrimaryButton>
-                </div>
+                <button
+                    type="submit"
+                    disabled={processing}
+                    className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary-container text-label-lg font-label-lg font-bold text-white transition-colors hover:bg-tertiary active:scale-[0.99] disabled:opacity-60"
+                >
+                    {processing && <Icon name="arrow-repeat" className="animate-spin text-[14px]" />}
+                    {processing ? 'Menyimpan...' : 'Simpan Password Baru'}
+                </button>
             </form>
         </GuestLayout>
     );

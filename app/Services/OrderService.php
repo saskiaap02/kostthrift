@@ -226,6 +226,54 @@ class OrderService
         };
     }
 
+    /**
+     * Batalkan otomatis pesanan yang melewati batas waktu (default 24 jam):
+     * - Pending: tidak direspons penjual dalam $hours jam sejak dibuat.
+     * - AwaitingPayment: tidak dibayar pembeli dalam $hours jam sejak disetujui.
+     */
+    public function expireStaleOrders(int $hours = 24): int
+    {
+        $cutoff = now()->subHours($hours);
+
+        $staleOrders = Order::query()
+            ->where(function ($query) use ($cutoff) {
+                $query->where('status', OrderStatus::Pending)
+                    ->where('created_at', '<=', $cutoff);
+            })
+            ->orWhere(function ($query) use ($cutoff) {
+                $query->where('status', OrderStatus::AwaitingPayment)
+                    ->where('accepted_at', '<=', $cutoff);
+            })
+            ->get();
+
+        $expiredCount = 0;
+
+        foreach ($staleOrders as $candidate) {
+            DB::transaction(function () use ($candidate, &$expiredCount): void {
+                $order = Order::query()->lockForUpdate()->find($candidate->id);
+
+                if (! $order || ! in_array($order->status, [OrderStatus::Pending, OrderStatus::AwaitingPayment], true)) {
+                    return;
+                }
+
+                $reason = $order->status === OrderStatus::Pending
+                    ? 'Pesanan kedaluwarsa otomatis karena tidak direspons penjual dalam batas waktu.'
+                    : 'Pesanan kedaluwarsa otomatis karena melewati batas waktu pembayaran.';
+
+                $order->update([
+                    'status' => OrderStatus::Cancelled,
+                    'cancel_reason' => $reason,
+                    'cancelled_at' => now(),
+                ]);
+
+                $this->setProductStatus($order, ProductStatus::Reserved, ProductStatus::Active);
+                $expiredCount++;
+            });
+        }
+
+        return $expiredCount;
+    }
+
     private function lock(Order $order): Order
     {
         return Order::query()->lockForUpdate()->findOrFail($order->id);
