@@ -121,6 +121,7 @@ function Actions({ product, isAdmin, onCart, onWishlist }) {
 export default function Show({ product, related }) {
     const authUser = usePage().props.auth?.user;
     const isAdmin = authUser?.role === 'admin';
+    const { toggleWishlist, addToCart } = useProductActions(REFRESH);
 
     const handleAskSeller = () => {
         if (!authUser) {
