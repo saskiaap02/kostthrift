@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use App\Http\Resources\NotificationResource;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -45,7 +46,13 @@ class HandleInertiaRequests extends Middleware
                     ->where('status', OrderStatus::Pending->value)
                     ->count(),
                 'unread_chats' => 0,
+                'unread_notifications' => $request->user()->unreadNotifications()->count(),
             ] : null,
+            'notifications' => fn () => $request->user()
+                ? NotificationResource::collection(
+                    $request->user()->notifications()->latest()->limit(8)->get()
+                )->resolve()
+                : [],
             'flash' => fn () => [
                 'success' => $request->session()->get('success'),
             ],

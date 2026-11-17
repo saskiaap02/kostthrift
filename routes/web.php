@@ -18,6 +18,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductStatusController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\WishlistController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\EnsureKtmVerified;
 use App\Http\Middleware\EnsureNotAdmin;
@@ -99,6 +100,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/verifikasi-ktm', [KtmVerificationController::class, 'show'])->name('ktm.show');
         Route::post('/verifikasi-ktm', [KtmVerificationController::class, 'store'])
             ->middleware('throttle:5,10')->name('ktm.store');
+    
+            
+        // Notifikasi dalam aplikasi
+        Route::get('/notifikasi', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::post('/notifikasi/{id}/baca', [NotificationController::class, 'read'])->name('notifications.read');
+        Route::post('/notifikasi/baca-semua', [NotificationController::class, 'readAll'])->name('notifications.read-all');
     });
 
     // Panel admin
