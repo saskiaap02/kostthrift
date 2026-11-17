@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import MarketLayout from '@/Layouts/MarketLayout';
 import Icon from '@/Components/UI/Icon';
 import ConditionBadge from '@/Components/UI/ConditionBadge';
@@ -119,8 +119,19 @@ function Actions({ product, isAdmin, onCart, onWishlist }) {
  *   related  [ProductResource] barang lain di kampus/kategori yang sama
  */
 export default function Show({ product, related }) {
-    const { toggleWishlist, addToCart } = useProductActions({ refresh: REFRESH });
-    const isAdmin = usePage().props.auth?.user?.role === 'admin';
+    const authUser = usePage().props.auth?.user;
+    const isAdmin = authUser?.role === 'admin';
+
+    const handleAskSeller = () => {
+        if (!authUser) {
+            router.visit('/login');
+            return;
+        }
+        router.post('/pesan/mulai', {
+            recipient_id: product.seller.id,
+            product_slug: product.slug,
+        });
+    };
 
     return (
         <MarketLayout>
@@ -199,19 +210,32 @@ export default function Show({ product, related }) {
                             onWishlist={() => toggleWishlist(product)}
                         />
 
-                        <div className="flex items-center gap-3 rounded-2xl border border-outline-variant/40 bg-surface-container-lowest p-4">
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary-container text-label-lg font-label-lg font-bold text-white">
-                                {initials(product.seller.name)}
+                        <div className="flex items-center justify-between gap-3 rounded-2xl border border-outline-variant/40 bg-surface-container-lowest p-4">
+                            <div className="flex min-w-0 items-center gap-3">
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary-container text-label-lg font-label-lg font-bold text-white">
+                                    {initials(product.seller.name)}
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="truncate font-headline-sm text-body-lg font-bold text-on-surface">
+                                        {product.seller.name}
+                                    </p>
+                                    <p className="text-body-sm font-body-sm text-on-surface-variant">
+                                        Bergabung sejak {product.seller.member_since}
+                                    </p>
+                                    {product.seller.ktm_verified && <VerifiedBadge className="mt-1" />}
+                                </div>
                             </div>
-                            <div className="min-w-0">
-                                <p className="truncate font-headline-sm text-body-lg font-bold text-on-surface">
-                                    {product.seller.name}
-                                </p>
-                                <p className="text-body-sm font-body-sm text-on-surface-variant">
-                                    Bergabung sejak {product.seller.member_since}
-                                </p>
-                                {product.seller.ktm_verified && <VerifiedBadge className="mt-1" />}
-                            </div>
+
+                            {!isAdmin && !product.is_owner && (
+                                <button
+                                    type="button"
+                                    onClick={handleAskSeller}
+                                    className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl border border-primary-container/40 bg-primary-fixed/30 px-3.5 text-label-lg font-label-lg font-bold text-primary-container transition-colors hover:bg-primary-fixed/60 active:scale-95"
+                                >
+                                    <Icon name="chat-dots" className="text-[15px]" />
+                                    <span>Tanya Penjual</span>
+                                </button>
+                            )}
                         </div>
 
                         <ul className="space-y-2 rounded-2xl bg-surface-container-low/70 p-4">

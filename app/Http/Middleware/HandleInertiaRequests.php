@@ -5,7 +5,9 @@ namespace App\Http\Middleware;
 use App\Enums\OrderStatus;
 use App\Models\Order;
 use Illuminate\Http\Request;
+use App\Services\ChatService;
 use Inertia\Middleware;
+
 
 class HandleInertiaRequests extends Middleware
 {
@@ -44,7 +46,7 @@ class HandleInertiaRequests extends Middleware
                     ->where('seller_id', $request->user()->id)
                     ->where('status', OrderStatus::Pending->value)
                     ->count(),
-                'unread_chats' => 0,
+                'unread_chats' => ChatService::unreadConversationsCount($request->user()),
             ] : null,
             'flash' => fn () => [
                 'success' => $request->session()->get('success'),
