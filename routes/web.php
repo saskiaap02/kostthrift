@@ -79,8 +79,10 @@ Route::middleware('auth')->group(function () {
             ->middleware(EnsureKtmVerified::class)->name('orders.store');
 
         // Pesanan
+        // Pesanan
         Route::get('/pesanan', [OrderController::class, 'index'])->name('orders.index');
         Route::get('/pesanan/{order}', [OrderController::class, 'show'])->name('orders.show');
+        Route::get('/pesanan/{order}/bukti-bayar', [OrderTransitionController::class, 'paymentProof'])->name('orders.payment-proof');
         Route::post('/pesanan/{order}/setujui', [OrderTransitionController::class, 'accept'])->name('orders.accept');
         Route::post('/pesanan/{order}/batalkan', [OrderTransitionController::class, 'cancel'])->name('orders.cancel');
         Route::post('/pesanan/{order}/lapor-bayar', [OrderTransitionController::class, 'reportPayment'])->name('orders.report-payment');

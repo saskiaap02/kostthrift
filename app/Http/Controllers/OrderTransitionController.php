@@ -4,11 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\AcceptOrderRequest;
 use App\Http\Requests\CancelOrderRequest;
+use App\Http\Requests\ReportPaymentRequest;
 use App\Models\Order;
 use App\Services\OrderService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 
 /** Perubahan status pesanan. Aturan siapa-boleh-apa ada di OrderService. */
 class OrderTransitionController extends Controller
@@ -36,13 +40,33 @@ class OrderTransitionController extends Controller
         return back()->with('success', 'Pesanan dibatalkan.');
     }
 
-    public function reportPayment(Request $request, Order $order, OrderService $orders): RedirectResponse
+    public function reportPayment(ReportPaymentRequest $request, Order $order, OrderService $orders): RedirectResponse
     {
         Gate::authorize('view', $order);
 
-        $orders->reportPayment($order, $request->user());
+        // Simpan di disk privat (local), bukan public
+        $path = $request->file('payment_proof')->store('payment-proofs', 'local');
 
-        return back()->with('success', 'Pembayaran dilaporkan. Tunggu konfirmasi penjual.');
+        try {
+            $orders->reportPayment($order, $request->user(), $path);
+        } catch (Throwable $e) {
+            Storage::disk('local')->delete($path);
+            throw $e;
+        }
+
+        return back()->with('success', 'Bukti transfer terkirim. Tunggu konfirmasi penjual.');
+    }
+
+    public function paymentProof(Order $order): StreamedResponse
+    {
+        Gate::authorize('view', $order);
+
+        abort_unless(
+            $order->payment_proof_path && Storage::disk('local')->exists($order->payment_proof_path),
+            404
+        );
+
+        return Storage::disk('local')->response($order->payment_proof_path);
     }
 
     public function confirmPayment(Request $request, Order $order, OrderService $orders): RedirectResponse

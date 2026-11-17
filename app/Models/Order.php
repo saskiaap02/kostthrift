@@ -20,6 +20,7 @@ class Order extends Model
         'buyer_note',
         'seller_note',
         'payment_snapshot',
+        'payment_proof_path',
         'cancel_reason',
         'cancelled_by',
         'accepted_at',
@@ -29,7 +30,10 @@ class Order extends Model
         'cancelled_at',
     ];
 
-    protected $hidden = ['payment_snapshot'];
+    protected $hidden = [
+        'payment_snapshot',
+        'payment_proof_path',
+    ];
 
     protected function casts(): array
     {

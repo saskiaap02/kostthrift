@@ -140,16 +140,17 @@ class OrderService
         });
     }
 
-    /** Pembeli melapor sudah mentransfer. */
-    public function reportPayment(Order $order, User $buyer): Order
+    /** Pembeli melapor sudah mentransfer beserta bukti foto. */
+    public function reportPayment(Order $order, User $buyer, string $proofPath): Order
     {
-        return DB::transaction(function () use ($order, $buyer): Order {
+        return DB::transaction(function () use ($order, $buyer, $proofPath): Order {
             $order = $this->lock($order);
             $this->assertBuyer($order, $buyer);
             $this->assertStatus($order, [OrderStatus::AwaitingPayment]);
 
             $order->update([
                 'status' => OrderStatus::PaymentReported,
+                'payment_proof_path' => $proofPath,
                 'payment_reported_at' => now(),
             ]);
 

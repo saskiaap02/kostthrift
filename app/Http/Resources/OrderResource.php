@@ -59,6 +59,7 @@ class OrderResource extends JsonResource
                 'image_url' => $item->product?->primaryImage?->url,
             ])->all(),
             'payment_info' => $showPayment ? $this->payment_snapshot : null,
+            'payment_proof_url' => $this->payment_proof_path ? "/pesanan/{$this->code}/bukti-bayar" : null,
             'created_at' => $human($this->created_at),
             'timeline' => [
                 'accepted_at' => $human($this->accepted_at),

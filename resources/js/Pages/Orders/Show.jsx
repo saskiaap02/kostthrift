@@ -62,9 +62,105 @@ function CopyNumber({ value }) {
     );
 }
 
+function ReportPaymentDialog({ open, error, processing, onCancel, onSubmit }) {
+    const [file, setFile] = useState(null);
+    const [preview, setPreview] = useState(null);
+
+    if (!open) return null;
+
+    const handleFileChange = (event) => {
+        const selected = event.target.files?.[0] ?? null;
+        setFile(selected);
+        if (preview) URL.revokeObjectURL(preview);
+        setPreview(selected ? URL.createObjectURL(selected) : null);
+    };
+
+    const handleClose = () => {
+        if (preview) URL.revokeObjectURL(preview);
+        setFile(null);
+        setPreview(null);
+        onCancel();
+    };
+
+    const handleSubmit = (event) => {
+        event.preventDefault();
+        if (!file) return;
+        onSubmit(file, () => {
+            if (preview) URL.revokeObjectURL(preview);
+            setFile(null);
+            setPreview(null);
+        });
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true">
+            <form
+                onSubmit={handleSubmit}
+                className="w-full max-w-md rounded-2xl border border-outline-variant/40 bg-surface-container-lowest p-5 shadow-xl"
+            >
+                <h3 className="font-headline-sm text-body-lg font-bold text-on-surface">Unggah bukti transfer</h3>
+                <p className="mt-1 text-body-md font-body-md text-on-surface-variant">
+                    Pastikan kamu sudah mentransfer ke rekening penjual, lalu unggah foto atau tangkapan layar bukti transfer (maks. 5 MB).
+                </p>
+
+                <div className="mt-4">
+                    <label
+                        htmlFor="payment_proof"
+                        className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-outline-variant/70 bg-surface-container-low/50 p-4 text-center transition hover:border-primary-container"
+                    >
+                        {preview ? (
+                            <img src={preview} alt="Pratinjau bukti transfer" className="max-h-52 rounded-lg object-contain" />
+                        ) : (
+                            <div className="py-3">
+                                <Icon name="cloud-arrow-up" className="text-[26px] text-primary-container" />
+                                <p className="mt-1.5 text-label-lg font-label-lg font-bold text-on-surface">
+                                    Pilih foto bukti transfer
+                                </p>
+                                <p className="mt-0.5 text-body-sm font-body-sm text-outline">JPG, PNG, atau WebP</p>
+                            </div>
+                        )}
+                        <input
+                            id="payment_proof"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            onChange={handleFileChange}
+                            className="sr-only"
+                        />
+                    </label>
+                    {file && (
+                        <p className="mt-1.5 truncate text-body-sm font-body-sm text-on-surface-variant">
+                            File dipilih: <span className="font-semibold text-on-surface">{file.name}</span>
+                        </p>
+                    )}
+                    {error && <p className="mt-1.5 text-body-sm font-body-sm font-semibold text-error">{error}</p>}
+                </div>
+
+                <div className="mt-5 flex justify-end gap-2">
+                    <button
+                        type="button"
+                        disabled={processing}
+                        onClick={handleClose}
+                        className="h-10 rounded-xl border border-outline-variant/60 px-4 text-label-lg font-label-lg font-bold text-on-surface-variant hover:bg-surface-container-low disabled:opacity-50"
+                    >
+                        Batal
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={processing || !file}
+                        className="flex h-10 items-center gap-1.5 rounded-xl bg-primary-container px-4 text-label-lg font-label-lg font-bold text-white hover:bg-tertiary disabled:opacity-50"
+                    >
+                        <Icon name="send-check" className="text-[13px]" />
+                        {processing ? 'Mengirim...' : 'Kirim bukti transfer'}
+                    </button>
+                </div>
+            </form>
+        </div>
+    );
+}
+
 /**
  * Props dari OrderController@show:
- *   order             OrderResource (role, counterpart, items, payment_info, timeline, actions)
+ *   order             OrderResource (role, counterpart, items, payment_info, payment_proof_url, timeline, actions)
  *   payment_accounts  akun pembayaran penjual (kosong bila yang melihat adalah pembeli)
  */
 export default function Show({ order, payment_accounts }) {
@@ -78,11 +174,15 @@ export default function Show({ order, payment_accounts }) {
     const can = (action) => order.actions.includes(action);
     const steps = buildSteps(order);
 
-    const send = (path, data = {}) => {
+    const send = (path, data = {}, onSuccessExtra = null) => {
         setBusy(true);
         router.post(`/pesanan/${order.code}/${path}`, data, {
             preserveScroll: true,
-            onSuccess: () => setDialog(null),
+            forceFormData: data instanceof FormData || Boolean(data.payment_proof),
+            onSuccess: () => {
+                setDialog(null);
+                if (onSuccessExtra) onSuccessExtra();
+            },
             onFinish: () => setBusy(false),
         });
     };
@@ -190,6 +290,38 @@ export default function Show({ order, payment_accounts }) {
                                         <dd className="font-extrabold tabular-nums text-primary">{formatRupiah(order.total)}</dd>
                                     </div>
                                 </dl>
+
+                                {order.payment_proof_url && (
+                                    <div className="mt-4 border-t border-outline-variant/30 pt-3.5">
+                                        <div className="mb-2 flex items-center justify-between">
+                                            <span className="text-label-lg font-label-lg font-bold text-on-surface">
+                                                Bukti transfer dari pembeli
+                                            </span>
+                                            <a
+                                                href={order.payment_proof_url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="inline-flex items-center gap-1 text-label-md font-label-md font-bold text-primary-container hover:underline"
+                                            >
+                                                <Icon name="box-arrow-up-right" className="text-[11px]" />
+                                                Buka ukuran penuh
+                                            </a>
+                                        </div>
+                                        <a
+                                            href={order.payment_proof_url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="block overflow-hidden rounded-xl border border-outline-variant/40 bg-surface-container-low"
+                                        >
+                                            <img
+                                                src={order.payment_proof_url}
+                                                alt="Bukti transfer pembayaran"
+                                                className="max-h-64 w-full object-contain"
+                                            />
+                                        </a>
+                                    </div>
+                                )}
+
                                 <p className="mt-3 flex items-start gap-2 rounded-xl bg-orange-50 p-3 text-body-sm font-body-sm text-orange-900">
                                     <Icon name="exclamation-triangle-fill" className="mt-0.5 text-[13px]" />
                                     Transfer hanya ke rekening di atas, dan simpan bukti transfermu. KosThrift tidak
@@ -405,14 +537,12 @@ export default function Show({ order, payment_accounts }) {
                 onSubmit={(reason) => send('batalkan', { reason })}
             />
 
-            <ConfirmDialog
+            <ReportPaymentDialog
                 open={dialog === 'report'}
-                title="Sudah transfer?"
-                message="Pastikan kamu sudah mentransfer ke rekening yang tertera di pesanan ini."
-                confirmLabel="Ya, sudah transfer"
+                error={errors.payment_proof}
                 processing={busy}
-                onConfirm={() => send('lapor-bayar')}
                 onCancel={() => setDialog(null)}
+                onSubmit={(file, resetFile) => send('lapor-bayar', { payment_proof: file }, resetFile)}
             />
 
             <ConfirmDialog
