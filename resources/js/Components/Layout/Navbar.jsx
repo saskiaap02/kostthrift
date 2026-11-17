@@ -295,8 +295,8 @@ export default function Navbar() {
                     <IconButton
                         icon="chat-dots"
                         label="Pesan"
-                        dot={(counts.unread_chats ?? 0) > 0}
-                        href={user ? null : '/login'}
+                        count={counts.unread_chats}
+                        href={user ? '/pesan' : '/login'}
                     />
 
                     {user ? (

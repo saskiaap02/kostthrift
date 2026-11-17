@@ -3,10 +3,11 @@
 namespace App\Http\Middleware;
 
 use App\Enums\OrderStatus;
+use App\Http\Resources\NotificationResource;
 use App\Models\Order;
+use App\Services\ChatService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
-use App\Http\Resources\NotificationResource;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -45,7 +46,7 @@ class HandleInertiaRequests extends Middleware
                     ->where('seller_id', $request->user()->id)
                     ->where('status', OrderStatus::Pending->value)
                     ->count(),
-                'unread_chats' => 0,
+                'unread_chats' => ChatService::unreadConversationsCount($request->user()),
                 'unread_notifications' => $request->user()->unreadNotifications()->count(),
             ] : null,
             'notifications' => fn () => $request->user()
