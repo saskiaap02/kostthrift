@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Notifications\AppActivityNotification;
 use App\Enums\KtmVerificationStatus;
 use App\Models\KtmVerification;
 use App\Models\User;
@@ -74,6 +75,14 @@ class KtmVerificationService
         });
 
         $this->deleteDocument($path);
+
+        $verification->user?->notify(new AppActivityNotification(
+            title: 'Verifikasi KTM disetujui',
+            message: 'Selamat! Akun mahasiswamu telah terverifikasi KTM. Sekarang kamu bisa memasang iklan dan melakukan checkout.',
+            url: '/verifikasi-ktm',
+            icon: 'patch-check-fill',
+            category: 'ktm',
+        ));
     }
 
     public function reject(KtmVerification $verification, User $admin, string $reason): void
@@ -90,6 +99,14 @@ class KtmVerificationService
         ]);
 
         $this->deleteDocument($path);
+
+        $verification->user?->notify(new AppActivityNotification(
+            title: 'Pengajuan verifikasi KTM ditolak',
+            message: "Pengajuan KTM ditolak admin: {$reason}. Silakan unggah ulang foto KTM yang jelas.",
+            url: '/verifikasi-ktm',
+            icon: 'exclamation-circle',
+            category: 'ktm',
+        ));
     }
 
     public function disk(): Filesystem

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import Icon from '@/Components/UI/Icon';
 import Logo from '@/Components/Layout/Logo';
 import SearchBar from '@/Components/Layout/SearchBar';
@@ -33,6 +33,120 @@ function IconButton({ icon, label, count = 0, dot = false, href = null }) {
         <button type="button" aria-label={label} className={className}>
             {content}
         </button>
+    );
+}
+
+function NotificationBell() {
+    const [open, setOpen] = useState(false);
+    const ref = useRef(null);
+    useClickOutside(ref, () => setOpen(false));
+
+    const { props } = usePage();
+    const unread = props.counts?.unread_notifications ?? 0;
+    const items = props.notifications ?? [];
+
+    const handleOpenItem = (item) => {
+        setOpen(false);
+        router.post(`/notifikasi/${item.id}/baca`);
+    };
+
+    const handleReadAll = () => {
+        router.post('/notifikasi/baca-semua', {}, { preserveScroll: true });
+    };
+
+    return (
+        <div ref={ref} className="relative">
+            <button
+                type="button"
+                onClick={() => setOpen((value) => !value)}
+                aria-label="Notifikasi"
+                aria-expanded={open}
+                className="relative flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container active:scale-90"
+            >
+                <Icon name="bell" className="text-[20px]" />
+                {unread > 0 && (
+                    <span className="absolute right-0 top-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-orange-500 px-1 text-[10px] font-bold text-white">
+                        {unread > 99 ? '99+' : unread}
+                    </span>
+                )}
+            </button>
+
+            {open && (
+                <div className="absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-2xl border border-outline-variant/50 bg-surface-container-lowest shadow-[0_8px_24px_-4px_rgba(27,58,140,0.14)] sm:w-96">
+                    <div className="flex items-center justify-between border-b border-outline-variant/30 px-4 py-3">
+                        <span className="font-headline-sm text-body-md font-bold text-on-surface">
+                            Notifikasi {unread > 0 ? `(${unread})` : ''}
+                        </span>
+                        {unread > 0 && (
+                            <button
+                                type="button"
+                                onClick={handleReadAll}
+                                className="text-label-md font-label-md font-bold text-primary-container hover:underline"
+                            >
+                                Tandai semua dibaca
+                            </button>
+                        )}
+                    </div>
+
+                    {items.length === 0 ? (
+                        <div className="px-4 py-8 text-center">
+                            <Icon name="bell-slash" className="text-[24px] text-outline" />
+                            <p className="mt-2 text-body-sm font-body-sm text-on-surface-variant">
+                                Belum ada notifikasi untukmu.
+                            </p>
+                        </div>
+                    ) : (
+                        <ul className="max-h-80 divide-y divide-outline-variant/20 overflow-y-auto">
+                            {items.map((item) => (
+                                <li key={item.id}>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleOpenItem(item)}
+                                        className={`flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-container-low ${
+                                            !item.is_read ? 'bg-primary-fixed/25' : ''
+                                        }`}
+                                    >
+                                        <div
+                                            className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                                                !item.is_read
+                                                    ? 'bg-primary-container text-white'
+                                                    : 'bg-surface-container text-on-surface-variant'
+                                            }`}
+                                        >
+                                            <Icon name={item.icon} className="text-[14px]" />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <p className="truncate text-body-sm font-body-sm font-bold text-on-surface">
+                                                    {item.title}
+                                                </p>
+                                                {!item.is_read && (
+                                                    <span className="h-2 w-2 shrink-0 rounded-full bg-orange-500" />
+                                                )}
+                                            </div>
+                                            <p className="mt-0.5 line-clamp-2 text-body-sm font-body-sm text-on-surface-variant">
+                                                {item.message}
+                                            </p>
+                                            <p className="mt-1 text-[11px] text-outline">{item.created_at}</p>
+                                        </div>
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+
+                    <div className="border-t border-outline-variant/30 bg-surface-container-low/50 px-4 py-2.5 text-center">
+                        <Link
+                            href="/notifikasi"
+                            onClick={() => setOpen(false)}
+                            className="text-label-md font-label-md font-bold text-primary-container hover:underline"
+                        >
+                            Lihat semua notifikasi
+                        </Link>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 }
 
@@ -181,9 +295,15 @@ export default function Navbar() {
                     <IconButton
                         icon="chat-dots"
                         label="Pesan"
-                        dot={(counts.unread_chats ?? 0) > 0}
-                        href={user ? null : '/login'}
+                        count={counts.unread_chats}
+                        href={user ? '/pesan' : '/login'}
                     />
+
+                    {user ? (
+                        <NotificationBell />
+                    ) : (
+                        <IconButton icon="bell" label="Notifikasi" href="/login" />
+                    )}
 
                     <Link
                         href="/jual"

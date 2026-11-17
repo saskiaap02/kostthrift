@@ -18,9 +18,11 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductStatusController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\WishlistController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\EnsureKtmVerified;
 use App\Http\Middleware\EnsureNotAdmin;
+use App\Http\Controllers\ConversationController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -99,7 +101,19 @@ Route::middleware('auth')->group(function () {
         Route::get('/verifikasi-ktm', [KtmVerificationController::class, 'show'])->name('ktm.show');
         Route::post('/verifikasi-ktm', [KtmVerificationController::class, 'store'])
             ->middleware('throttle:5,10')->name('ktm.store');
+    
+            
+        // Notifikasi dalam aplikasi
+        Route::get('/notifikasi', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::post('/notifikasi/{id}/baca', [NotificationController::class, 'read'])->name('notifications.read');
+        Route::post('/notifikasi/baca-semua', [NotificationController::class, 'readAll'])->name('notifications.read-all');
     });
+
+    // Pesan / Chat antar pengguna
+        Route::get('/pesan', [ConversationController::class, 'index'])->name('chat.index');
+        Route::post('/pesan/mulai', [ConversationController::class, 'start'])->name('chat.start');
+        Route::get('/pesan/{conversation}', [ConversationController::class, 'index'])->name('chat.show');
+        Route::post('/pesan/{conversation}/kirim', [ConversationController::class, 'storeMessage'])->name('chat.messages.store');
 
     // Panel admin
     Route::middleware(EnsureAdmin::class)->prefix('admin')->name('admin.')->group(function () {

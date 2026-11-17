@@ -80,4 +80,9 @@ class User extends Authenticatable
     {
         return $this->ktm_verified_at !== null;
     }
+
+    public function conversations()
+    {
+        return Conversation::query()->forUser($this->id);
+    }
 }
