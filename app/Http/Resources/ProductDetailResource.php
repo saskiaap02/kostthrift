@@ -44,6 +44,7 @@ class ProductDetailResource extends JsonResource
                 'province' => $this->campus->province,
             ],
             'seller' => [
+                'id' => $this->seller->id,
                 'name' => $this->seller->name,
                 'ktm_verified' => $this->seller->ktm_verified_at !== null,
                 'member_since' => $this->seller->created_at->locale('id')->translatedFormat('F Y'),
