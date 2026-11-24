@@ -1,64 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import Icon from '@/Components/UI/Icon';
 import ConfirmDialog from '@/Components/UI/ConfirmDialog';
+import ReasonDialog from '@/Components/UI/ReasonDialog';
 import ImageLightbox from '@/Components/Product/ImageLightbox';
-import { textareaClass } from '@/Components/UI/FormField';
-
-function RejectDialog({ target, processing, error, onCancel, onSubmit }) {
-    const [reason, setReason] = useState('');
-
-    useEffect(() => {
-        if (target) setReason('');
-    }, [target]);
-
-    if (!target) return null;
-
-    return (
-        <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Tolak pengajuan"
-            className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4"
-            onClick={(event) => event.target === event.currentTarget && onCancel()}
-        >
-            <div className="w-full max-w-md rounded-2xl bg-surface-container-lowest p-6 shadow-xl">
-                <h2 className="font-headline-md text-headline-sm font-bold text-on-surface">
-                    Tolak pengajuan {target.user.name}?
-                </h2>
-                <p className="mt-1 text-body-md font-body-md text-on-surface-variant">
-                    Tulis alasan agar mahasiswa tahu apa yang harus diperbaiki. Foto KTM akan dihapus permanen.
-                </p>
-                <textarea
-                    value={reason}
-                    onChange={(event) => setReason(event.target.value)}
-                    maxLength={200}
-                    placeholder="Mis. Foto buram, nama tidak terbaca, atau KTM sudah kedaluwarsa."
-                    className={`${textareaClass} mt-4`}
-                />
-                {error && <p className="mt-1.5 text-body-sm font-body-sm font-semibold text-error">{error}</p>}
-                <div className="mt-5 flex justify-end gap-3">
-                    <button
-                        type="button"
-                        onClick={onCancel}
-                        className="h-11 rounded-xl border border-outline-variant/60 px-5 text-label-lg font-label-lg font-bold text-on-surface-variant hover:bg-surface-container-low"
-                    >
-                        Batal
-                    </button>
-                    <button
-                        type="button"
-                        disabled={processing}
-                        onClick={() => onSubmit(reason)}
-                        className="h-11 rounded-xl bg-error px-5 text-label-lg font-label-lg font-bold text-white hover:opacity-90 disabled:opacity-60"
-                    >
-                        {processing ? 'Memproses...' : 'Tolak'}
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-}
 
 function Meta({ icon, children }) {
     return (
@@ -228,8 +174,13 @@ export default function Index({ pending, history }) {
                 onCancel={() => setApproving(null)}
             />
 
-            <RejectDialog
-                target={rejecting}
+            <ReasonDialog
+                open={Boolean(rejecting)}
+                title={`Tolak pengajuan ${rejecting?.user.name}?`}
+                description="Tulis alasan agar mahasiswa tahu apa yang harus diperbaiki. Foto KTM akan dihapus permanen."
+                placeholder="Mis. Foto buram, nama tidak terbaca, atau KTM sudah kedaluwarsa."
+                confirmLabel="Tolak"
+                cancelLabel="Batal"
                 processing={busy}
                 error={errors?.reason}
                 onCancel={() => setRejecting(null)}

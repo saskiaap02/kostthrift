@@ -32,10 +32,14 @@ class StoreCartItemRequest extends FormRequest
     {
         return [
             function (Validator $validator) {
-                $product = Product::find($this->integer('product_id'));
+                $product = Product::with('seller:id,suspended_at')->find($this->integer('product_id'));
 
                 if ($product && $product->seller_id === $this->user()->id) {
                     $validator->errors()->add('product_id', 'Kamu tidak bisa membeli barangmu sendiri.');
+                }
+
+                if ($product && $product->seller->isSuspended()) {
+                    $validator->errors()->add('product_id', 'Barang ini sudah tidak tersedia.');
                 }
             },
         ];

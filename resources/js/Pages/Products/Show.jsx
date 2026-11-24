@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import MarketLayout from '@/Layouts/MarketLayout';
 import Icon from '@/Components/UI/Icon';
@@ -5,6 +6,7 @@ import ConditionBadge from '@/Components/UI/ConditionBadge';
 import VerifiedBadge from '@/Components/UI/VerifiedBadge';
 import ProductGallery from '@/Components/Product/ProductGallery';
 import ProductGrid from '@/Components/Product/ProductGrid';
+import ReportDialog from '@/Components/Product/ReportDialog';
 import useProductActions from '@/Hooks/useProductActions';
 import { formatRupiah, initials } from '@/Lib/format';
 
@@ -113,16 +115,50 @@ function Actions({ product, isAdmin, onCart, onWishlist }) {
     );
 }
 
+/** Tombol "Laporkan Iklan". Tamu diarahkan masuk dulu; pemilik dan admin tidak melihatnya. */
+function ReportButton({ product, isAdmin, isGuest, onOpen }) {
+    if (isAdmin || product.is_owner) return null;
+
+    const base =
+        'inline-flex items-center gap-1.5 text-label-lg font-label-lg font-bold text-on-surface-variant transition-colors hover:text-error';
+
+    if (isGuest) {
+        return (
+            <Link href="/login" className={base}>
+                <Icon name="flag" className="text-[14px]" />
+                Masuk untuk melaporkan iklan
+            </Link>
+        );
+    }
+
+    if (product.has_reported) {
+        return (
+            <p className="inline-flex items-center gap-1.5 text-label-lg font-label-lg font-bold text-on-surface-variant">
+                <Icon name="flag-fill" className="text-[14px] text-error" />
+                Laporanmu sedang ditinjau admin
+            </p>
+        );
+    }
+
+    return (
+        <button type="button" onClick={onOpen} className={base}>
+            <Icon name="flag" className="text-[14px]" />
+            Laporkan Iklan
+        </button>
+    );
+}
+
 /**
  * Props dari ProductController@show:
- *   product  ProductDetailResource (lengkap dengan images, seller, campus)
- *   related  [ProductResource] barang lain di kampus/kategori yang sama
+ *   product         ProductDetailResource (lengkap dengan images, seller, campus)
+ *   related         [ProductResource] barang lain di kampus/kategori yang sama
+ *   report_reasons  [{ value, label }] pilihan alasan untuk dialog laporan
  */
-export default function Show({ product, related }) {
+export default function Show({ product, related, report_reasons: reportReasons }) {
+    const { toggleWishlist, addToCart } = useProductActions({ refresh: REFRESH });
     const authUser = usePage().props.auth?.user;
     const isAdmin = authUser?.role === 'admin';
-    const { toggleWishlist, addToCart } = useProductActions(REFRESH);
-
+    const [reporting, setReporting] = useState(false);
 
     const handleAskSeller = () => {
         if (!authUser) {
@@ -240,6 +276,13 @@ export default function Show({ product, related }) {
                             )}
                         </div>
 
+                        <ReportButton
+                            product={product}
+                            isAdmin={isAdmin}
+                            isGuest={!authUser}
+                            onOpen={() => setReporting(true)}
+                        />
+
                         <ul className="space-y-2 rounded-2xl bg-surface-container-low/70 p-4">
                             {ASSURANCES.map((item) => (
                                 <li
@@ -287,6 +330,13 @@ export default function Show({ product, related }) {
                     </section>
                 )}
             </div>
+
+            <ReportDialog
+                open={reporting}
+                onClose={() => setReporting(false)}
+                product={product}
+                reasons={reportReasons}
+            />
         </MarketLayout>
     );
 }

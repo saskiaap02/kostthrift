@@ -24,7 +24,7 @@ class RegisteredUserController extends Controller
         ]);
     }
 
-    /** Buat akun baru lalu langsung masuk ke Beranda. */
+    /** Buat akun baru, kirim email verifikasi, lalu masuk. */
     public function store(RegisterRequest $request): RedirectResponse
     {
         $data = $request->validated();
@@ -40,6 +40,7 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect()->route('home');
+        // Email belum terverifikasi: arahkan ke halaman "cek emailmu" (menjelajah tetap boleh).
+        return redirect()->route('verification.notice');
     }
 }

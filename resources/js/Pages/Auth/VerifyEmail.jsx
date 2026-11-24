@@ -34,7 +34,13 @@ export default function VerifyEmail({ status }) {
                     {processing ? 'Mengirim ulang...' : 'Kirim Ulang Email Verifikasi'}
                 </button>
 
-                <div className="text-center">
+                <div className="flex items-center justify-center gap-5 text-center">
+                    <Link
+                        href="/"
+                        className="text-body-md font-body-md font-bold text-primary-container hover:underline"
+                    >
+                        Jelajahi dulu
+                    </Link>
                     <Link
                         href="/logout"
                         method="post"

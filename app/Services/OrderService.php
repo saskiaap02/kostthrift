@@ -9,7 +9,7 @@ use App\Models\Order;
 use App\Models\PaymentAccount;
 use App\Models\Product;
 use App\Models\User;
-use App\Notifications\AppActivityNotification;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -29,7 +29,11 @@ class OrderService
             $this->fail('Kamu tidak bisa memesan barangmu sendiri.', 'seller_id');
         }
 
-        $order = DB::transaction(function () use ($buyer, $sellerId, $method, $note): Order {
+        if (User::query()->whereKey($sellerId)->whereNotNull('suspended_at')->exists()) {
+            $this->fail('Penjual ini sedang tidak dapat menerima pesanan.', 'seller_id');
+        }
+
+        return DB::transaction(function () use ($buyer, $sellerId, $method, $note): Order {
             $cartIds = $buyer->cartProducts()
                 ->where('products.seller_id', $sellerId)
                 ->pluck('products.id');
@@ -75,22 +79,12 @@ class OrderService
 
             return $order;
         });
-
-        $order->seller->notify(new AppActivityNotification(
-            title: 'Pesanan baru masuk',
-            message: "{$buyer->name} memesan barangmu ({$order->code}). Segera tinjau dan setujui.",
-            url: "/pesanan/{$order->code}",
-            icon: 'bag-check',
-            category: 'order',
-        ));
-
-        return $order;
     }
 
     /** Penjual menyetujui. Untuk transfer, wajib memilih rekening penerima. */
     public function accept(Order $order, User $seller, ?int $paymentAccountId, ?string $sellerNote): Order
     {
-        $order = DB::transaction(function () use ($order, $seller, $paymentAccountId, $sellerNote): Order {
+        return DB::transaction(function () use ($order, $seller, $paymentAccountId, $sellerNote): Order {
             $order = $this->lock($order);
             $this->assertSeller($order, $seller);
             $this->assertStatus($order, [OrderStatus::Pending]);
@@ -128,26 +122,12 @@ class OrderService
 
             return $order;
         });
-
-        $instruction = $order->payment_method === PaymentMethod::Cod
-            ? 'Silakan koordinasikan titik temu COD di kampus.'
-            : 'Rekening penjual sudah tersedia. Segera lakukan transfer dan unggah bukti bayar.';
-
-        $order->buyer->notify(new AppActivityNotification(
-            title: 'Pesanan disetujui penjual',
-            message: "Pesanan {$order->code} telah disetujui. {$instruction}",
-            url: "/pesanan/{$order->code}",
-            icon: 'check-circle',
-            category: 'order',
-        ));
-
-        return $order;
     }
 
     /** Pembeli atau penjual membatalkan (penjual pada status pending = menolak). */
     public function cancel(Order $order, User $actor, string $reason): Order
     {
-        $order = DB::transaction(function () use ($order, $actor, $reason): Order {
+        return DB::transaction(function () use ($order, $actor, $reason): Order {
             $order = $this->lock($order);
             $this->assertParticipant($order, $actor);
             $this->assertStatus($order, [OrderStatus::Pending, OrderStatus::Accepted, OrderStatus::AwaitingPayment]);
@@ -163,27 +143,12 @@ class OrderService
 
             return $order;
         });
-
-        $isRejectedBySeller = $actor->id === $order->seller_id && $order->accepted_at === null;
-        $recipient = $actor->id === $order->seller_id ? $order->buyer : $order->seller;
-
-        $recipient->notify(new AppActivityNotification(
-            title: $isRejectedBySeller ? 'Pesanan ditolak penjual' : 'Pesanan dibatalkan',
-            message: $isRejectedBySeller
-                ? "Pesanan {$order->code} ditolak penjual: {$reason}"
-                : "Pesanan {$order->code} dibatalkan: {$reason}",
-            url: "/pesanan/{$order->code}",
-            icon: 'x-circle',
-            category: 'order',
-        ));
-
-        return $order;
     }
 
     /** Pembeli melapor sudah mentransfer beserta bukti foto. */
     public function reportPayment(Order $order, User $buyer, string $proofPath): Order
     {
-        $order = DB::transaction(function () use ($order, $buyer, $proofPath): Order {
+        return DB::transaction(function () use ($order, $buyer, $proofPath): Order {
             $order = $this->lock($order);
             $this->assertBuyer($order, $buyer);
             $this->assertStatus($order, [OrderStatus::AwaitingPayment]);
@@ -196,22 +161,12 @@ class OrderService
 
             return $order;
         });
-
-        $order->seller->notify(new AppActivityNotification(
-            title: 'Bukti transfer diunggah',
-            message: "{$buyer->name} mengunggah bukti pembayaran untuk pesanan {$order->code}. Periksa mutasi rekeningmu.",
-            url: "/pesanan/{$order->code}",
-            icon: 'receipt',
-            category: 'payment',
-        ));
-
-        return $order;
     }
 
     /** Penjual memastikan uang sudah masuk ke rekeningnya. */
     public function confirmPayment(Order $order, User $seller): Order
     {
-        $order = DB::transaction(function () use ($order, $seller): Order {
+        return DB::transaction(function () use ($order, $seller): Order {
             $order = $this->lock($order);
             $this->assertSeller($order, $seller);
             $this->assertStatus($order, [OrderStatus::AwaitingPayment, OrderStatus::PaymentReported]);
@@ -223,16 +178,6 @@ class OrderService
 
             return $order;
         });
-
-        $order->buyer->notify(new AppActivityNotification(
-            title: 'Pembayaran dikonfirmasi penjual',
-            message: "Penjual telah mengonfirmasi pembayaran untuk pesanan {$order->code}. Segera atur serah terima barang.",
-            url: "/pesanan/{$order->code}",
-            icon: 'cash-coin',
-            category: 'payment',
-        ));
-
-        return $order;
     }
 
     /** Barang sudah berpindah tangan. COD: dari "disetujui". Transfer: dari "pembayaran dikonfirmasi". */
@@ -332,6 +277,71 @@ class OrderService
         }
 
         return $expiredCount;
+    }
+
+    /**
+     * Admin menurunkan iklan: batalkan pesanan yang belum dibayar untuk iklan itu supaya pembeli tidak menunggu sia-sia.
+     * Pesanan yang uangnya sudah dilaporkan atau dikonfirmasi tidak disentuh (admin menindaklanjuti lewat /admin/pesanan).
+     *
+     * @return int jumlah pesanan yang dibatalkan
+     */
+    public function cancelOpenOrdersForProduct(int $productId, string $reason): int
+    {
+        $ids = Order::query()
+            ->whereIn('status', $this->openStatuses())
+            ->whereHas('items', fn ($items) => $items->where('product_id', $productId))
+            ->pluck('id');
+
+        return $this->cancelBySystem($ids, $reason);
+    }
+
+    /**
+     * Akun diblokir: batalkan pesanan berjalan yang belum dibayar, baik sebagai pembeli maupun penjual,
+     * agar barang yang ditahan kembali tayang. Aturan pesanan yang sudah dibayar sama seperti di atas.
+     *
+     * @return int jumlah pesanan yang dibatalkan
+     */
+    public function cancelOpenOrdersForUser(User $user, string $reason): int
+    {
+        $ids = Order::query()
+            ->whereIn('status', $this->openStatuses())
+            ->where(fn ($query) => $query->where('buyer_id', $user->id)->orWhere('seller_id', $user->id))
+            ->pluck('id');
+
+        return $this->cancelBySystem($ids, $reason);
+    }
+
+    /** @return list<string> status yang belum melibatkan pembayaran */
+    private function openStatuses(): array
+    {
+        return [OrderStatus::Pending->value, OrderStatus::Accepted->value, OrderStatus::AwaitingPayment->value];
+    }
+
+    /** @param  Collection<int, int>  $ids */
+    private function cancelBySystem(Collection $ids, string $reason): int
+    {
+        $cancelled = 0;
+
+        foreach ($ids as $id) {
+            DB::transaction(function () use ($id, $reason, &$cancelled): void {
+                $order = Order::query()->lockForUpdate()->find($id);
+
+                if (! $order || ! in_array($order->status->value, $this->openStatuses(), true)) {
+                    return; // sudah berubah sejak daftar diambil
+                }
+
+                $order->update([
+                    'status' => OrderStatus::Cancelled,
+                    'cancel_reason' => $reason,
+                    'cancelled_at' => now(),
+                ]);
+
+                $this->setProductStatus($order, ProductStatus::Reserved, ProductStatus::Active);
+                $cancelled++;
+            });
+        }
+
+        return $cancelled;
     }
 
     private function lock(Order $order): Order

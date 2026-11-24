@@ -6,8 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AdminListRequest;
 use App\Http\Resources\AdminProductResource;
 use App\Models\Product;
+use App\Enums\AdminActionType;
+use App\Services\AdminAuditLog;
+use App\Services\OrderService;
+use App\Services\ReportReviewService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -33,10 +38,26 @@ class ProductModerationController extends Controller
     }
 
     /** Turunkan iklan yang melanggar (disembunyikan, bukan dihapus permanen): DELETE /admin/iklan/{slug} */
-    public function destroy(Product $product): RedirectResponse
+    public function destroy(Request $request, Product $product, ReportReviewService $reports, OrderService $orders, AdminAuditLog $audit): RedirectResponse
     {
         $product->delete();
 
-        return back()->with('success', 'Iklan diturunkan.');
+        // Laporan yang masih menunggu untuk iklan ini ikut ditutup.
+        $reports->resolvePendingFor($product->id, $request->user());
+
+        // Pesanan belum dibayar untuk iklan ini dibatalkan agar pembeli tidak menunggu sia-sia.
+        $cancelled = $orders->cancelOpenOrdersForProduct($product->id, ReportReviewService::TAKEDOWN_REASON);
+
+        $audit->record(
+            $request->user(),
+            AdminActionType::ProductTakenDown,
+            "Menurunkan iklan \"{$product->title}\" milik {$product->seller->name}",
+            'product',
+            $product->id,
+            ['orders_cancelled' => $cancelled, 'source' => 'admin_ads'],
+        );
+
+        return back()->with('success', 'Iklan diturunkan.'
+            .($cancelled > 0 ? " {$cancelled} pesanan berjalan dibatalkan." : ''));
     }
 }

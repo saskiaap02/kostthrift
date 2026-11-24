@@ -6,9 +6,12 @@ import { initials } from '@/Lib/format';
 
 const NAV = [
     { href: '/admin', label: 'Dashboard', icon: 'speedometer2', exact: true },
-    { href: '/admin/verifikasi-ktm', label: 'Verifikasi KTM', icon: 'patch-check', badge: true },
+    { href: '/admin/verifikasi-ktm', label: 'Verifikasi KTM', icon: 'patch-check', badge: 'ktm' },
     { href: '/admin/iklan', label: 'Iklan', icon: 'card-list' },
+    { href: '/admin/laporan', label: 'Laporan', icon: 'flag', badge: 'reports' },
+    { href: '/admin/pesanan', label: 'Pesanan', icon: 'receipt' },
     { href: '/admin/pengguna', label: 'Pengguna', icon: 'people' },
+    { href: '/admin/log', label: 'Log Aksi', icon: 'clock-history' },
 ];
 
 /**
@@ -18,7 +21,8 @@ const NAV = [
 export default function AdminLayout({ children }) {
     const { url, props } = usePage();
     const user = props.auth?.user;
-    const pending = props.adminPendingKtm ?? 0;
+    // jumlah antrean per menu (dibagikan middleware EnsureAdmin)
+    const badges = { ktm: props.adminPendingKtm ?? 0, reports: props.adminPendingReports ?? 0 };
     const path = url.split('?')[0];
 
     const isActive = (item) => (item.exact ? path === item.href : path.startsWith(item.href));
@@ -47,9 +51,9 @@ export default function AdminLayout({ children }) {
                         >
                             <Icon name={item.icon} className="text-[16px]" />
                             <span className="flex-1">{item.label}</span>
-                            {item.badge && pending > 0 && (
+                            {item.badge && badges[item.badge] > 0 && (
                                 <span className="flex h-[20px] min-w-[20px] items-center justify-center rounded-full bg-orange-500 px-1.5 text-[11px] font-bold text-white">
-                                    {pending}
+                                    {badges[item.badge]}
                                 </span>
                             )}
                         </Link>

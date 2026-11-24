@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
@@ -23,8 +22,9 @@ class PasswordResetLinkController extends Controller
     }
 
     /**
-     * Proses permintaan reset password.
-     * Untuk kemudahan demo lokal, langsung arahkan ke halaman buat password baru.
+     * Kirim tautan reset password ke email pemilik akun.
+     * Jawaban selalu sama, ada atau tidaknya akun, agar daftar email terdaftar tidak bisa ditebak.
+     * (Saat MAIL_MAILER=log, tautan muncul di storage/logs/laravel.log.)
      */
     public function store(Request $request): RedirectResponse
     {
@@ -35,20 +35,8 @@ class PasswordResetLinkController extends Controller
             'email.email' => 'Format alamat email tidak valid.',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        Password::sendResetLink($request->only('email'));
 
-        if (! $user) {
-            return back()->withErrors([
-                'email' => 'Email tersebut tidak terdaftar di KosThrift.',
-            ]);
-        }
-
-        // Buat token reset password resmi Laravel & langsung redirect ke form password baru
-        $token = Password::broker()->createToken($user);
-
-        return redirect()->route('password.reset', [
-            'token' => $token,
-            'email' => $user->email,
-        ]);
+        return back()->with('status', 'Jika email itu terdaftar, tautan untuk mengatur ulang password sudah dikirim. Cek kotak masuk atau folder spam.');
     }
 }

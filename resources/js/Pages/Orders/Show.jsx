@@ -486,20 +486,6 @@ export default function Show({ order, payment_accounts }) {
                                     Bergabung {order.counterpart.joined}
                                 </li>
                             </ul>
-                            {order.counterpart?.id && (
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        router.post('/pesan/mulai', {
-                                            recipient_id: order.counterpart.id,
-                                        })
-                                    }
-                                    className="mt-4 flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-primary-container/40 bg-primary-fixed/30 text-label-lg font-label-lg font-bold text-primary-container transition-colors hover:bg-primary-fixed/60"
-                                >
-                                    <Icon name="chat-dots" className="text-[15px]" />
-                                    <span>{isSeller ? 'Chat Pembeli' : 'Chat Penjual'}</span>
-                                </button>
-                            )}
                         </Card>
 
                         <Card title="Perkembangan">

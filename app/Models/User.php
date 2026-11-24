@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -49,6 +50,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'ktm_verified_at' => 'datetime',
+            'suspended_at' => 'datetime',
         ];
     }
 
@@ -76,13 +78,20 @@ class User extends Authenticatable
         return $this->belongsToMany(Product::class, 'cart_items')->withTimestamps();
     }
 
+    /** Akun diblokir admin: tidak bisa masuk dan iklannya disembunyikan. */
+    public function isSuspended(): bool
+    {
+        return $this->suspended_at !== null;
+    }
+
+    /** Pesan untuk akun yang diblokir (dipakai saat login dan saat sesi diputus). */
+    public static function suspensionMessage(?string $reason): string
+    {
+        return 'Akunmu dinonaktifkan oleh admin.'.($reason ? " Alasan: {$reason}" : '');
+    }
+
     public function isKtmVerified(): bool
     {
         return $this->ktm_verified_at !== null;
-    }
-
-    public function conversations()
-    {
-        return Conversation::query()->forUser($this->id);
     }
 }

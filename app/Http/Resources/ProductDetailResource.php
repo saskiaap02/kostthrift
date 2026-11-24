@@ -8,7 +8,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * Data lengkap satu produk untuk halaman detail.
  * Membutuhkan relasi: images, seller, campus.university, category.
- * `is_wishlisted` dan `in_cart` diisi lewat loadExists() di controller (user login).
+ * `is_wishlisted`, `in_cart`, dan `has_reported` diisi lewat loadExists() di controller (user login).
  *
  * @mixin \App\Models\Product
  */
@@ -44,7 +44,6 @@ class ProductDetailResource extends JsonResource
                 'province' => $this->campus->province,
             ],
             'seller' => [
-                'id' => $this->seller->id,
                 'name' => $this->seller->name,
                 'ktm_verified' => $this->seller->ktm_verified_at !== null,
                 'member_since' => $this->seller->created_at->locale('id')->translatedFormat('F Y'),
@@ -53,6 +52,7 @@ class ProductDetailResource extends JsonResource
             'is_owner' => $request->user()?->id === $this->seller_id,
             'is_wishlisted' => (bool) ($this->is_wishlisted ?? false),
             'in_cart' => (bool) ($this->in_cart ?? false),
+            'has_reported' => (bool) ($this->has_reported ?? false),
         ];
     }
 }

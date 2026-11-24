@@ -1,28 +1,33 @@
 <?php
 
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\KtmReviewController;
+use App\Http\Controllers\Admin\OrderMonitorController;
 use App\Http\Controllers\Admin\ProductModerationController;
+use App\Http\Controllers\Admin\ReportReviewController;
 use App\Http\Controllers\Admin\UserDirectoryController;
+use App\Http\Controllers\Admin\UserSuspensionController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CartItemController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InfoPageController;
 use App\Http\Controllers\KtmVerificationController;
 use App\Http\Controllers\MyProductController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderTransitionController;
 use App\Http\Controllers\PaymentAccountController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductStatusController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\WishlistController;
-use App\Http\Controllers\NotificationController;
 use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\EnsureKtmVerified;
 use App\Http\Middleware\EnsureNotAdmin;
-use App\Http\Controllers\ConversationController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -50,15 +55,22 @@ Route::middleware('auth')->group(function () {
     // Foto KTM: pemilik dan admin (dijaga KtmVerificationPolicy)
     Route::get('/verifikasi-ktm/{verification}/dokumen', [KtmVerificationController::class, 'document'])->name('ktm.document');
 
+    // Pesan / Chat antar pengguna
+    Route::get('/pesan', [ConversationController::class, 'index'])->name('chat.index');
+    Route::post('/pesan/mulai', [ConversationController::class, 'start'])->name('chat.start');
+    Route::get('/pesan/{conversation}', [ConversationController::class, 'index'])->name('chat.show');
+    Route::post('/pesan/{conversation}/kirim', [ConversationController::class, 'storeMessage'])->name('chat.messages.store');
+
     // Pembeli dan penjual. Akun admin dialihkan ke panel admin.
     Route::middleware(EnsureNotAdmin::class)->group(function () {
         // Jual & AI Foto Produk: WAJIB mahasiswa terverifikasi KTM
+        // Semua aksi sensitif di bawah ini juga mewajibkan email terverifikasi ('verified').
         Route::get('/jual', [ProductController::class, 'create'])
-            ->middleware(EnsureKtmVerified::class)->name('products.create');
+            ->middleware(['verified', EnsureKtmVerified::class])->name('products.create');
         Route::post('/produk', [ProductController::class, 'store'])
-            ->middleware(EnsureKtmVerified::class)->name('products.store');
+            ->middleware(['verified', EnsureKtmVerified::class])->name('products.store');
         Route::post('/produk/analisis-foto', [ProductController::class, 'analyzePhoto'])
-            ->middleware([EnsureKtmVerified::class, 'throttle:10,5'])->name('products.analyze-photo');
+            ->middleware(['verified', EnsureKtmVerified::class, 'throttle:10,5'])->name('products.analyze-photo');
 
         // Iklan Saya: daftar, edit, hapus, tandai terjual
         Route::get('/iklan-saya', [MyProductController::class, 'index'])->name('my-products.index');
@@ -67,20 +79,26 @@ Route::middleware('auth')->group(function () {
         Route::delete('/produk/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
         Route::patch('/produk/{product}/status', [ProductStatusController::class, 'update'])->name('products.status.update');
 
+        // Laporkan iklan (penipuan, barang terlarang, spam, dll.)
+        Route::post('/produk/{product}/laporan', [ReportController::class, 'store'])
+            ->middleware(['verified', 'throttle:10,1'])->name('products.report');
+
         // Wishlist
         Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
-        Route::post('/wishlist/{product}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
+        Route::post('/wishlist/{product}', [WishlistController::class, 'toggle'])
+            ->middleware('throttle:60,1')->name('wishlist.toggle');
 
         // Troli
         Route::get('/troli', [CartController::class, 'index'])->name('cart.index');
-        Route::post('/troli', [CartItemController::class, 'store'])->name('cart.items.store');
+        Route::post('/troli', [CartItemController::class, 'store'])
+            ->middleware('throttle:60,1')->name('cart.items.store');
         Route::delete('/troli/{product}', [CartItemController::class, 'destroy'])->name('cart.items.destroy');
 
         // Checkout: WAJIB terverifikasi KTM (pembeli maupun penjual)
         Route::get('/checkout/{seller}', [CheckoutController::class, 'show'])
-            ->middleware(EnsureKtmVerified::class)->name('checkout.show');
+            ->middleware(['verified', EnsureKtmVerified::class])->name('checkout.show');
         Route::post('/pesanan', [CheckoutController::class, 'store'])
-            ->middleware(EnsureKtmVerified::class)->name('orders.store');
+            ->middleware(['verified', EnsureKtmVerified::class, 'throttle:20,1'])->name('orders.store');
 
         // Pesanan
         Route::get('/pesanan', [OrderController::class, 'index'])->name('orders.index');
@@ -100,20 +118,13 @@ Route::middleware('auth')->group(function () {
         // Verifikasi KTM (halaman pengguna)
         Route::get('/verifikasi-ktm', [KtmVerificationController::class, 'show'])->name('ktm.show');
         Route::post('/verifikasi-ktm', [KtmVerificationController::class, 'store'])
-            ->middleware('throttle:5,10')->name('ktm.store');
-    
-            
+            ->middleware(['verified', 'throttle:5,10'])->name('ktm.store');
+
         // Notifikasi dalam aplikasi
         Route::get('/notifikasi', [NotificationController::class, 'index'])->name('notifications.index');
         Route::post('/notifikasi/{id}/baca', [NotificationController::class, 'read'])->name('notifications.read');
         Route::post('/notifikasi/baca-semua', [NotificationController::class, 'readAll'])->name('notifications.read-all');
     });
-
-    // Pesan / Chat antar pengguna
-        Route::get('/pesan', [ConversationController::class, 'index'])->name('chat.index');
-        Route::post('/pesan/mulai', [ConversationController::class, 'start'])->name('chat.start');
-        Route::get('/pesan/{conversation}', [ConversationController::class, 'index'])->name('chat.show');
-        Route::post('/pesan/{conversation}/kirim', [ConversationController::class, 'storeMessage'])->name('chat.messages.store');
 
     // Panel admin
     Route::middleware(EnsureAdmin::class)->prefix('admin')->name('admin.')->group(function () {
@@ -126,7 +137,18 @@ Route::middleware('auth')->group(function () {
         Route::get('/iklan', [ProductModerationController::class, 'index'])->name('products.index');
         Route::delete('/iklan/{product}', [ProductModerationController::class, 'destroy'])->name('products.destroy');
 
+        Route::get('/laporan', [ReportReviewController::class, 'index'])->name('reports.index');
+        Route::post('/laporan/{report}/turunkan', [ReportReviewController::class, 'takeDown'])->name('reports.take-down');
+        Route::post('/laporan/{report}/tolak', [ReportReviewController::class, 'dismiss'])->name('reports.dismiss');
+
+        Route::get('/pesanan', [OrderMonitorController::class, 'index'])->name('orders.index');
+        Route::get('/pesanan/{order}/bukti-bayar', [OrderMonitorController::class, 'paymentProof'])->name('orders.payment-proof');
+
+        Route::get('/log', [AuditLogController::class, 'index'])->name('audit-log.index');
+
         Route::get('/pengguna', [UserDirectoryController::class, 'index'])->name('users.index');
+        Route::post('/pengguna/{user}/blokir', [UserSuspensionController::class, 'store'])->name('users.suspend');
+        Route::delete('/pengguna/{user}/blokir', [UserSuspensionController::class, 'destroy'])->name('users.unsuspend');
     });
 
     // Profile bawaan Breeze

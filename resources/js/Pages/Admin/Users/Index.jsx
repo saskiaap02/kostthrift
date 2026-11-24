@@ -1,23 +1,53 @@
 import { useState } from 'react';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import Icon from '@/Components/UI/Icon';
+import ConfirmDialog from '@/Components/UI/ConfirmDialog';
+import ReasonDialog from '@/Components/UI/ReasonDialog';
 import Pagination from '@/Components/UI/Pagination';
 import { cleanFilters } from '@/Lib/query';
+
+const TABS = [
+    { value: '', label: 'Semua' },
+    { value: 'active', label: 'Aktif' },
+    { value: 'suspended', label: 'Diblokir' },
+];
 
 /**
  * Props dari Admin\UserDirectoryController@index:
  *   users    { data: [AdminUserResource], meta, links }
- *   filters  { q }
+ *   filters  { q, akun }  akun: '' | active | suspended
  */
 export default function Index({ users, filters }) {
+    const { errors } = usePage().props;
     const [query, setQuery] = useState(filters.q);
+    const [blocking, setBlocking] = useState(null);   // pengguna yang akan diblokir
+    const [restoring, setRestoring] = useState(null); // pengguna yang akan diaktifkan lagi
+    const [busy, setBusy] = useState(false);
+
+    const visit = (next) =>
+        router.get('/admin/pengguna', cleanFilters(next), { preserveState: true, preserveScroll: true });
 
     const search = (event) => {
         event.preventDefault();
-        router.get('/admin/pengguna', cleanFilters({ q: query.trim() }), {
-            preserveState: true,
+        visit({ ...filters, q: query.trim() });
+    };
+
+    const block = (reason) => {
+        setBusy(true);
+        router.post(`/admin/pengguna/${blocking.id}/blokir`, { reason }, {
             preserveScroll: true,
+            onSuccess: () => setBlocking(null),
+            onFinish: () => setBusy(false),
+        });
+    };
+
+    const restore = () => {
+        setBusy(true);
+        router.delete(`/admin/pengguna/${restoring.id}/blokir`, {
+            preserveScroll: true,
+            onSuccess: () => setRestoring(null),
+            onFinish: () => setBusy(false),
         });
     };
 
@@ -30,8 +60,30 @@ export default function Index({ users, filters }) {
                     Pengguna
                 </h1>
                 <p className="mt-1 text-body-md font-body-md text-on-surface-variant">
-                    {users.meta.total} pengguna terdaftar (tidak termasuk admin).
+                    {users.meta.total} pengguna{filters.akun === 'suspended' ? ' diblokir' : filters.akun === 'active' ? ' aktif' : ' terdaftar'} (tidak termasuk admin).
                 </p>
+
+                <div role="tablist" aria-label="Status akun" className="mt-4 flex gap-2">
+                    {TABS.map((tab) => {
+                        const active = filters.akun === tab.value;
+                        return (
+                            <button
+                                key={tab.value || 'semua'}
+                                type="button"
+                                role="tab"
+                                aria-selected={active}
+                                onClick={() => visit({ ...filters, akun: tab.value })}
+                                className={`h-9 rounded-full px-4 text-label-md font-label-md transition-colors ${
+                                    active
+                                        ? 'bg-primary-container font-bold text-white'
+                                        : 'border border-outline-variant/60 bg-surface-container-lowest text-on-surface-variant hover:border-primary-container'
+                                }`}
+                            >
+                                {tab.label}
+                            </button>
+                        );
+                    })}
+                </div>
 
                 <form
                     role="search"
@@ -77,6 +129,15 @@ export default function Index({ users, filters }) {
                                         {user.campus ?? 'Kampus belum dipilih'}
                                     </span>
                                     <span>Bergabung {user.joined_at}</span>
+                                    {user.suspended && (
+                                        <span
+                                            title={user.suspended_reason ?? undefined}
+                                            className="flex items-center gap-1 rounded-full bg-error/10 px-2.5 py-0.5 text-label-sm font-label-sm font-bold text-error"
+                                        >
+                                            <Icon name="slash-circle" className="text-[11px]" />
+                                            Diblokir {user.suspended_at}
+                                        </span>
+                                    )}
                                     {user.verified ? (
                                         <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-label-sm font-label-sm font-bold text-emerald-700">
                                             <Icon name="patch-check-fill" className="text-[11px]" />
@@ -87,7 +148,31 @@ export default function Index({ users, filters }) {
                                             Belum verifikasi
                                         </span>
                                     )}
+                                    {user.suspended ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => setRestoring(user)}
+                                            className="flex h-8 items-center gap-1 rounded-lg border border-outline-variant/60 px-3 text-label-md font-label-md font-bold text-primary-container hover:bg-surface-container-low"
+                                        >
+                                            <Icon name="arrow-counterclockwise" className="text-[12px]" />
+                                            Aktifkan
+                                        </button>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => setBlocking(user)}
+                                            className="flex h-8 items-center gap-1 rounded-lg border border-error/40 px-3 text-label-md font-label-md font-bold text-error hover:bg-error/5"
+                                        >
+                                            <Icon name="slash-circle" className="text-[12px]" />
+                                            Blokir
+                                        </button>
+                                    )}
                                 </div>
+                                {user.suspended && user.suspended_reason && (
+                                    <p className="text-body-sm font-body-sm text-error md:hidden">
+                                        Alasan: {user.suspended_reason}
+                                    </p>
+                                )}
                             </li>
                         ))}
                     </ul>
@@ -95,6 +180,28 @@ export default function Index({ users, filters }) {
 
                 <Pagination links={users.links} meta={users.meta} />
             </div>
+
+            <ReasonDialog
+                open={Boolean(blocking)}
+                title={`Blokir ${blocking?.name}?`}
+                description="Akun tidak bisa masuk lagi, semua iklannya disembunyikan dari katalog, dan pesanannya yang belum dibayar dibatalkan. Alasan ditampilkan kepada pengguna saat mencoba masuk."
+                placeholder="Mis. Terbukti menipu pembeli, dilaporkan beberapa pengguna."
+                confirmLabel="Blokir akun"
+                error={errors.reason}
+                processing={busy}
+                onCancel={() => setBlocking(null)}
+                onSubmit={block}
+            />
+
+            <ConfirmDialog
+                open={Boolean(restoring)}
+                title="Aktifkan akun ini lagi?"
+                message={`${restoring?.name} akan bisa masuk kembali dan iklannya tampil lagi di katalog.`}
+                confirmLabel="Ya, aktifkan"
+                processing={busy}
+                onConfirm={restore}
+                onCancel={() => setRestoring(null)}
+            />
         </AdminLayout>
     );
 }

@@ -24,6 +24,9 @@ class AdminUserResource extends JsonResource
             'verified_at' => $this->ktm_verified_at
                 ? Carbon::parse($this->ktm_verified_at)->locale('id')->diffForHumans()
                 : null,
+            'suspended' => $this->suspended_at !== null,
+            'suspended_at' => $this->suspended_at?->locale('id')->diffForHumans(),
+            'suspended_reason' => $this->suspended_reason,
             'joined_at' => $this->created_at->locale('id')->diffForHumans(),
         ];
     }

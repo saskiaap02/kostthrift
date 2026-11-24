@@ -16,11 +16,14 @@ class UserDirectoryController extends Controller
     /** Daftar pengguna (tanpa admin), bisa dicari: GET /admin/pengguna */
     public function index(AdminListRequest $request): Response
     {
-        $term = $request->filters()['q'];
+        $filters = $request->filters();
+        $term = $filters['q'];
 
         $users = User::query()
             ->where('role', UserRole::User->value)
             ->with('campus.university')
+            ->when($filters['akun'] === 'suspended', fn (Builder $query) => $query->whereNotNull('suspended_at'))
+            ->when($filters['akun'] === 'active', fn (Builder $query) => $query->whereNull('suspended_at'))
             ->when($term !== '', function (Builder $query) use ($term) {
                 $like = '%'.addcslashes($term, '%_\\').'%';
 
@@ -34,7 +37,7 @@ class UserDirectoryController extends Controller
 
         return Inertia::render('Admin/Users/Index', [
             'users' => AdminUserResource::collection($users),
-            'filters' => ['q' => $term],
+            'filters' => ['q' => $term, 'akun' => $filters['akun']],
         ]);
     }
 }

@@ -19,11 +19,12 @@ class AdminListRequest extends FormRequest
         return [
             'q' => ['nullable', 'string', 'max:100'],
             'status' => ['nullable', Rule::enum(ProductStatus::class)],
+            'akun' => ['nullable', Rule::in(['active', 'suspended'])],
             'page' => ['nullable', 'integer', 'min:1'],
         ];
     }
 
-    /** @return array{q: string, status: string} */
+    /** @return array{q: string, status: string, akun: string} */
     public function filters(): array
     {
         $validated = $this->validated();
@@ -31,6 +32,7 @@ class AdminListRequest extends FormRequest
         return [
             'q' => $validated['q'] ?? '',
             'status' => $validated['status'] ?? '',
+            'akun' => $validated['akun'] ?? '',
         ];
     }
 }

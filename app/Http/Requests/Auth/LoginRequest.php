@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -51,6 +52,19 @@ class LoginRequest extends FormRequest
         }
 
         RateLimiter::clear($this->throttleKey());
+
+        // Password benar tapi akun diblokir admin: jangan biarkan masuk.
+        $user = Auth::user();
+
+        if ($user?->isSuspended()) {
+            $reason = $user->suspended_reason;
+
+            Auth::guard('web')->logout();
+
+            throw ValidationException::withMessages([
+                'email' => User::suspensionMessage($reason),
+            ]);
+        }
     }
 
     /**

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ProductStatus;
+use App\Enums\ReportReason;
+use App\Enums\ReportStatus;
 use App\Http\Requests\AnalyzeProductPhotoRequest;
 use App\Http\Requests\HomeIndexRequest;
 use App\Http\Requests\StoreProductRequest;
@@ -49,12 +51,17 @@ class ProductController extends Controller
             $product->loadExists([
                 'wishlistedBy as is_wishlisted' => fn ($query) => $query->whereKey($user->id),
                 'cartedBy as in_cart' => fn ($query) => $query->whereKey($user->id),
+                // sudah melaporkan iklan ini dan laporannya belum ditinjau
+                'reports as has_reported' => fn ($query) => $query
+                    ->where('reporter_id', $user->id)
+                    ->where('status', ReportStatus::Pending->value),
             ]);
         }
 
         return Inertia::render('Products/Show', [
             'product' => ProductDetailResource::make($product)->resolve(),
             'related' => ProductResource::collection($products->related($product, $user))->resolve(),
+            'report_reasons' => ReportReason::options(),
         ]);
     }
 

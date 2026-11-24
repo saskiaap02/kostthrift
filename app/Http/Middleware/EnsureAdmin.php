@@ -3,8 +3,10 @@
 namespace App\Http\Middleware;
 
 use App\Enums\KtmVerificationStatus;
+use App\Enums\ReportStatus;
 use App\Enums\UserRole;
 use App\Models\KtmVerification;
+use App\Models\Report;
 use Closure;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -20,6 +22,11 @@ class EnsureAdmin
         // Jumlah antrean KTM untuk lencana di menu admin (hanya dihitung bila dipakai).
         Inertia::share('adminPendingKtm', fn () => KtmVerification::query()
             ->where('status', KtmVerificationStatus::Pending->value)
+            ->count());
+
+        // Jumlah laporan iklan yang menunggu ditinjau, untuk lencana menu Laporan.
+        Inertia::share('adminPendingReports', fn () => Report::query()
+            ->where('status', ReportStatus::Pending->value)
             ->count());
 
         return $next($request);

@@ -79,6 +79,12 @@ class Product extends Model
         return $this->belongsToMany(User::class, 'cart_items')->withTimestamps();
     }
 
+    /** Laporan pelanggaran dari pengguna untuk iklan ini. */
+    public function reports(): HasMany
+    {
+        return $this->hasMany(Report::class);
+    }
+
     public function images(): HasMany
     {
         return $this->hasMany(ProductImage::class)->orderBy('sort_order');

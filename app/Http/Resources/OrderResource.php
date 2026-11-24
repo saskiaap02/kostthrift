@@ -46,7 +46,6 @@ class OrderResource extends JsonResource
             'cancel_reason' => $this->cancel_reason,
             'role' => $role,
             'counterpart' => [
-                'id' => $counterpart->id,
                 'name' => $counterpart->name,
                 'ktm_verified' => $counterpart->ktm_verified_at !== null,
                 'campus' => $counterpart->campus?->label,

@@ -55,6 +55,8 @@ class ProductQueryService
     {
         return Product::query()
             ->active()
+            // iklan milik akun yang diblokir admin tidak tampil di katalog
+            ->whereHas('seller', fn (Builder $seller) => $seller->whereNull('suspended_at'))
             ->with([
                 'primaryImage',
                 'seller:id,name,ktm_verified_at',

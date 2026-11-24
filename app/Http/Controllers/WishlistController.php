@@ -17,6 +17,8 @@ class WishlistController extends Controller
     {
         $products = $request->user()
             ->wishlistedProducts()
+            // iklan penjual yang diblokir admin tidak ditampilkan
+            ->whereHas('seller', fn ($seller) => $seller->whereNull('suspended_at'))
             ->with(['primaryImage', 'seller:id,name,ktm_verified_at', 'campus.university'])
             ->orderByPivot('created_at', 'desc')
             ->paginate(12)
@@ -32,7 +34,7 @@ class WishlistController extends Controller
 
     public function toggle(Request $request, Product $product): RedirectResponse
     {
-        abort_unless($product->status === ProductStatus::Active, 404);
+        abort_unless($product->status === ProductStatus::Active && ! $product->seller->isSuspended(), 404);
 
         $request->user()->wishlistedProducts()->toggle($product->id);
 

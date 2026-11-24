@@ -163,7 +163,7 @@ export default function Index({ products, filters }) {
             <ConfirmDialog
                 open={Boolean(target)}
                 title="Turunkan iklan ini?"
-                message={`"${target?.title}" akan disembunyikan dari katalog.`}
+                message={`"${target?.title}" akan disembunyikan dari katalog dan pesanan yang belum dibayar ikut dibatalkan.`}
                 confirmLabel="Ya, turunkan"
                 tone="danger"
                 processing={busy}
