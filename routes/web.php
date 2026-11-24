@@ -48,7 +48,7 @@ Route::controller(InfoPageController::class)->group(function () {
 // Route Dashboard bawaan Breeze
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware('auth')->name('dashboard');
 
 // Route Fitur User Login & Panel Admin
 Route::middleware('auth')->group(function () {
@@ -64,13 +64,12 @@ Route::middleware('auth')->group(function () {
     // Pembeli dan penjual. Akun admin dialihkan ke panel admin.
     Route::middleware(EnsureNotAdmin::class)->group(function () {
         // Jual & AI Foto Produk: WAJIB mahasiswa terverifikasi KTM
-        // Semua aksi sensitif di bawah ini juga mewajibkan email terverifikasi ('verified').
         Route::get('/jual', [ProductController::class, 'create'])
-            ->middleware(['verified', EnsureKtmVerified::class])->name('products.create');
+            ->middleware(EnsureKtmVerified::class)->name('products.create');
         Route::post('/produk', [ProductController::class, 'store'])
-            ->middleware(['verified', EnsureKtmVerified::class])->name('products.store');
+            ->middleware(EnsureKtmVerified::class)->name('products.store');
         Route::post('/produk/analisis-foto', [ProductController::class, 'analyzePhoto'])
-            ->middleware(['verified', EnsureKtmVerified::class, 'throttle:10,5'])->name('products.analyze-photo');
+            ->middleware([EnsureKtmVerified::class, 'throttle:10,5'])->name('products.analyze-photo');
 
         // Iklan Saya: daftar, edit, hapus, tandai terjual
         Route::get('/iklan-saya', [MyProductController::class, 'index'])->name('my-products.index');
@@ -81,7 +80,7 @@ Route::middleware('auth')->group(function () {
 
         // Laporkan iklan (penipuan, barang terlarang, spam, dll.)
         Route::post('/produk/{product}/laporan', [ReportController::class, 'store'])
-            ->middleware(['verified', 'throttle:10,1'])->name('products.report');
+            ->middleware('throttle:10,1')->name('products.report');
 
         // Wishlist
         Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
@@ -96,9 +95,9 @@ Route::middleware('auth')->group(function () {
 
         // Checkout: WAJIB terverifikasi KTM (pembeli maupun penjual)
         Route::get('/checkout/{seller}', [CheckoutController::class, 'show'])
-            ->middleware(['verified', EnsureKtmVerified::class])->name('checkout.show');
+            ->middleware(EnsureKtmVerified::class)->name('checkout.show');
         Route::post('/pesanan', [CheckoutController::class, 'store'])
-            ->middleware(['verified', EnsureKtmVerified::class, 'throttle:20,1'])->name('orders.store');
+            ->middleware([EnsureKtmVerified::class, 'throttle:20,1'])->name('orders.store');
 
         // Pesanan
         Route::get('/pesanan', [OrderController::class, 'index'])->name('orders.index');
@@ -118,7 +117,7 @@ Route::middleware('auth')->group(function () {
         // Verifikasi KTM (halaman pengguna)
         Route::get('/verifikasi-ktm', [KtmVerificationController::class, 'show'])->name('ktm.show');
         Route::post('/verifikasi-ktm', [KtmVerificationController::class, 'store'])
-            ->middleware(['verified', 'throttle:5,10'])->name('ktm.store');
+            ->middleware('throttle:5,10')->name('ktm.store');
 
         // Notifikasi dalam aplikasi
         Route::get('/notifikasi', [NotificationController::class, 'index'])->name('notifications.index');
